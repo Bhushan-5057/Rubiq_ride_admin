@@ -93,8 +93,8 @@ export default function SignUpForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 poppins-semibold-italic">
-      <div className="w-full max-w-5xl h-auto md:h-[80vh] grid grid-cols-1 md:grid-cols-2 lg:h-120! rounded-3xl overflow-hidden dark:bg-black  backdrop-blur-sm bg-white/80 transition-all duration-300">
-        <div className="relative hidden md:flex flex-col justify-center items-center bg-white dark:bg-gray-900 p-10 overflow-hidden border-r border-gray-100 dark:border-gray-800">
+      <div className="w-full max-w-5xl h-auto md:h-[80vh] grid grid-cols-1 md:grid-cols-2 lg:h-120! rounded-3xl overflow-hidden   backdrop-blur-sm bg-white/80 transition-all duration-300">
+        <div className="relative hidden md:flex flex-col justify-center items-center bg-white  p-10 overflow-hidden border-r border-gray-100 ">
           {/* Decorative shapes - adjusted for white background */}
           <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-brand-500/5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl animate-pulse"></div>
@@ -102,7 +102,7 @@ export default function SignUpForm() {
           <div className="absolute top-8 left-8 flex items-center gap-2 z-10">
             <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
             <span className="text-xl font-bold tracking-widest uppercase select-none">
-              <span className="text-gray-800 dark:text-white">RUBIQ</span>
+              <span className="text-gray-800 ">RUBIQ</span>
               <span className="ml-1.5 text-brand-600">RIDE</span>
             </span>
           </div>
@@ -118,10 +118,10 @@ export default function SignUpForm() {
 
         <div className="flex flex-col justify-center p-6 sm:p-10 w-full">
           <div className="w-full max-w-sm mx-auto">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white mb-2 text-center md:text-left">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800  mb-2 text-center md:text-left">
               Sign Up
             </h1>
-            <p className="text-sm font-semibold dark:text-white text-gray-500 mb-8 text-center md:text-left ">
+            <p className="text-sm font-semibold  text-gray-500 mb-8 text-center md:text-left ">
               Create your admin account
             </p>
 
@@ -201,7 +201,7 @@ export default function SignUpForm() {
                 render={({ field }) => (
                   <select
                     {...field}
-                    className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-sm focus:border-[#c09a6b] focus:ring-1 focus:ring-[#c09a6b] outline-none transition-all dark:bg-gray-900 dark:text-white"
+                    className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-sm focus:border-[#c09a6b] focus:ring-1 focus:ring-[#c09a6b] outline-none transition-all  "
                   >
                     <option value="super_admin">Super Admin</option>
                     <option value="admin">Admin</option>
@@ -221,11 +221,11 @@ export default function SignUpForm() {
               </Button>
             </form>
 
-            <p className="mt-6 text-sm font-semibold dark:text-white text-gray-500 text-center md:text-left">
+            <p className="mt-6 text-sm font-semibold  text-gray-500 text-center md:text-left">
               Already have an account?{" "}
               <Link
                 to="/auth"
-                className="text-indigo-500 dark:text-indigo-400 hover:underline"
+                className="text-indigo-500  hover:underline"
               >
                 Log In
               </Link>

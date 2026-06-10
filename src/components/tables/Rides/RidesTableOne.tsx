@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Eye, Search, MapPin } from "lucide-react";
+import { useEffect } from "react";
+import { Eye, MapPin } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +23,12 @@ import { useToast } from "../../ui/toast/ToastContext";
 import Badge from "../../ui/badge/Badge";
 import { TrashBinIcon } from "../../../icons";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import {
+  PaginationControls,
+  SearchControl,
+  StatusFilterControl,
+  useGetAllTableQuery,
+} from "../shared/GetAllTableControls";
 
 export default function RidesTableOne() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,128 +36,154 @@ export default function RidesTableOne() {
 
   const { showToast } = useToast();
 
-  const {
-    data: rides,
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.ride);
+  const { data: rides, loading, error, pagination } = useSelector(
+    (state: RootState) => state.ride,
+  );
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const { query, search, setSearch, setQuery, setSort, setStatusFilter, sortMark } =
+    useGetAllTableQuery();
 
   useEffect(() => {
-    dispatch(fetchAllRidesThunk());
-  }, [dispatch]);
+    dispatch(fetchAllRidesThunk(query));
+  }, [dispatch, query]);
 
   const handleDelete = async (rideId: string) => {
     try {
       await dispatch(deleteRideThunk(rideId)).unwrap();
 
       showToast("Ride deleted successfully", "success");
+      dispatch(fetchAllRidesThunk(query));
     } catch (error) {
       showToast(getApiErrorMessage(error), "error");
     }
   };
 
   const safeRides = Array.isArray(rides) ? rides : [];
-
-  const filteredRides = safeRides.filter((ride) => {
-    const search = searchTerm.toLowerCase();
-
-    const rideId = ride?.rideId?.toLowerCase?.() ?? "";
-    const passengerName = ride?.passenger?.name?.toLowerCase?.() ?? "";
-    const driverName = ride?.driver?.name?.toLowerCase?.() ?? "";
-    const pickupAddress = ride?.pickup?.address?.toLowerCase?.() ?? "";
-    const dropAddress = ride?.drop?.address?.toLowerCase?.() ?? "";
-
-    return (
-      rideId.includes(search) ||
-      passengerName.includes(search) ||
-      driverName.includes(search) ||
-      pickupAddress.includes(search) ||
-      dropAddress.includes(search)
-    );
-  });
+  const currentPage = pagination.page || query.page || 1;
+  const limit = pagination.limit || query.limit || 5;
 
   if (loading) return <p>Loading rides...</p>;
 
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="compact-table overflow-hidden rounded-lg poppins-semibold-italic border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      {/* 🔍 Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 border-b border-gray-100 dark:border-white/[0.05]">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
-          Ride List
+    <div className="compact-table overflow-hidden rounded-lg poppins-semibold-italic border border-gray-200 bg-white  ">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 border-b border-gray-100 ">
+        <h2 className="text-sm font-semibold text-gray-800 ">
+          Rides Table
         </h2>
 
-        <div className="relative w-full sm:w-64 md:w-72 lg:w-80">
-          <input
-            type="text"
-            placeholder="Search by ID, passenger, driver..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-9 py-1.5 text-xs text-gray-700
-            placeholder-gray-400 focus:border-gray-500 focus:outline-none
-            dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <StatusFilterControl
+            value={query.status}
+            onChange={setStatusFilter}
+            options={[
+              { label: "Pending", value: "pending" },
+              { label: "Accepted", value: "accepted" },
+              { label: "Completed", value: "completed" },
+              { label: "Cancelled", value: "cancelled" },
+            ]}
           />
-
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          <SearchControl
+            placeholder="Search by ID, passenger, driver..."
+            value={search}
+            onChange={setSearch}
           />
         </div>
       </div>
 
-      {/* 🧾 Table Section */}
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="w-full">
           <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableHeader className="border-b border-gray-100 ">
               <TableRow>
-                {[
-                  "Ride ID",
-                  "Passenger",
-                  "Driver",
-                  "Route",
-                  "Distance (km)",
-                  "Fare (₹)",
-                  "Status",
-                  "Date",
-                  "Actions",
-                ].map((head) => (
-                  <TableCell
-                    key={head}
-                    isHeader
-                    className="px-5 py-3 text-start text-sm font-medium text-black dark:text-white whitespace-nowrap"
-                  >
-                    {head}
-                  </TableCell>
-                ))}
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  Ride ID
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  Passenger
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  Driver
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  Route
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  <button onClick={() => setSort("distance")}>
+                    Distance (km){sortMark("distance")}
+                  </button>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  <button onClick={() => setSort("fareEstimate")}>
+                    Fare (₹){sortMark("fareEstimate")}
+                  </button>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  <button onClick={() => setSort("status")}>
+                    Status{sortMark("status")}
+                  </button>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  <button onClick={() => setSort("createdAt")}>
+                    Date{sortMark("createdAt")}
+                  </button>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
+                >
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHeader>
 
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {filteredRides.length === 0 ? (
+            <TableBody className="divide-y divide-gray-100 ">
+              {safeRides.length === 0 ? (
                 <TableRow>
-                  <TableCell className="text-center py-6 text-gray-500 dark:text-gray-400">
+                  <TableCell className="text-center py-6 text-gray-500 ">
                     No rides found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRides.map((ride, index) => (
+                safeRides.map((ride, index) => (
                   <TableRow key={ride.rideId || `${ride.createdAt}-${index}`}>
                     {/* Ride ID */}
-                    <TableCell className="px-5 py-4 text-sm font-semibold text-gray-700 dark:text-white">
-                      {`RI${String(index + 1).padStart(3, "0")}`}
+                    <TableCell className="px-5 py-4 text-sm font-semibold text-gray-700 ">
+                      {`RI${String((currentPage - 1) * limit + index + 1).padStart(3, "0")}`}
                     </TableCell>
 
                     {/* Passenger */}
-                    <TableCell className="px-5 py-4 text-gray-500 dark:text-white whitespace-nowrap">
+                    <TableCell className="px-5 py-4 text-gray-500  whitespace-nowrap">
                       {ride.passenger?.name || "-"}
                     </TableCell>
 
                     {/* Driver */}
-                    <TableCell className="px-5 py-4 text-gray-500 dark:text-white whitespace-nowrap">
+                    <TableCell className="px-5 py-4 text-gray-500  whitespace-nowrap">
                       <Badge
                         size="sm"
                         variant="light"
@@ -164,7 +196,7 @@ export default function RidesTableOne() {
                     </TableCell>
 
                     {/* Route */}
-                    <TableCell className="px-5 py-3 text-start text-sm font-medium text-black dark:text-white whitespace-nowrap">
+                    <TableCell className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="flex items-center gap-1 text-green-500">
                           {(ride.pickup?.address || "").length > 10
@@ -204,7 +236,7 @@ export default function RidesTableOne() {
                     </TableCell>
 
                     {/* Fare */}
-                    <TableCell className="px-5 py-4 text-gray-500 dark:text-white">
+                    <TableCell className="px-5 py-4 text-gray-500 ">
                       ₹ {ride.fareEstimate}
                     </TableCell>
 
@@ -226,12 +258,12 @@ export default function RidesTableOne() {
                     </TableCell>
 
                     {/* Date */}
-                    <TableCell className="px-5 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-white">
+                    <TableCell className="px-5 py-4 text-gray-500 text-sm whitespace-nowrap ">
                       {formatDate(ride.createdAt)}
                     </TableCell>
 
                     {/* Actions */}
-                    <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white">
+                    <TableCell className="px-5 py-4 text-sm font-medium text-gray-800 ">
                       <div className="flex items-center gap-2">
                         {/* 👁 View Button */}
                         <button
@@ -241,12 +273,12 @@ export default function RidesTableOne() {
                             })
                           }
                           title="View"
-                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-white"
+                          className="p-1.5 rounded-full hover:bg-gray-100  "
                         >
                           <Eye
                             size={16}
                             style={{ color: "black" }}
-                            className="dark:fill-white"
+                            className=""
                           />
                         </button>
 
@@ -256,7 +288,7 @@ export default function RidesTableOne() {
                             ride.rideId && handleDelete(ride.rideId)
                           }
                           title="Delete"
-                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                          className="p-1.5 rounded-full hover:bg-gray-100 "
                         >
                           <TrashBinIcon
                             style={{
@@ -274,6 +306,12 @@ export default function RidesTableOne() {
           </Table>
         </div>
       </div>
+
+      <PaginationControls
+        pagination={pagination}
+        query={query}
+        setQuery={setQuery}
+      />
     </div>
   );
 }

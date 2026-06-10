@@ -8,10 +8,10 @@ export default function RideTable() {
   return (
     <>
       <PageMeta
-        title=" Ride's Tables Dashboard |"
-        description="Ride's Table"
+        title="Rides Management |"
+        description="Rides Management"
       />
-      <PageBreadcrumb pageTitle="Ride's" />
+      <PageBreadcrumb pageTitle="Rides Management" />
       <div className="space-y-4">
         <RidesTableOne/>
       </div>

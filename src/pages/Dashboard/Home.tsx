@@ -17,18 +17,12 @@ import {
 } from "../../components/ui/table";
 import { formatDate } from "../../lib/utils";
 
-const recentLimit = 5;
-
-const getRecentItems = <T extends { createdAt?: string | number | Date }>(
-  items: T[],
-) =>
-  [...items]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt || 0).getTime() -
-        new Date(a.createdAt || 0).getTime(),
-    )
-    .slice(0, recentLimit);
+const latestQuery = {
+  page: 1,
+  limit: 1000,
+  sortBy: "createdAt",
+  sortOrder: "desc" as const,
+};
 
 function StatCard({
   label,
@@ -40,7 +34,7 @@ function StatCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-theme-xs dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-theme-xs  ">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
           {icon}
@@ -49,7 +43,7 @@ function StatCard({
           <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
             {label}
           </p>
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">
+          <p className="text-xl font-semibold text-gray-900 ">
             {value}
           </p>
         </div>
@@ -74,9 +68,9 @@ function DashboardTable({
   const hasRows = Children.count(children) > 0;
 
   return (
-    <section className="compact-table rounded-lg border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 dark:border-white/[0.05]">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
+    <section className="compact-table rounded-lg border border-gray-200 bg-white  ">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 ">
+        <h2 className="text-sm font-semibold text-gray-800 ">
           {title}
         </h2>
         <Link
@@ -88,20 +82,20 @@ function DashboardTable({
       </div>
       <div className="overflow-x-auto custom-scrollbar">
         <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+          <TableHeader className="border-b border-gray-100 ">
             <TableRow>
               {headers.map((header) => (
                 <TableCell
                   key={header}
                   isHeader
-                  className="text-start font-medium text-gray-700 dark:text-white whitespace-nowrap"
+                  className="text-start font-medium text-gray-700  whitespace-nowrap"
                 >
                   {header}
                 </TableCell>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+          <TableBody className="divide-y divide-gray-100 ">
             {hasRows ? children : (
               <TableRow>
                 <TableCell className="py-6 text-center text-gray-500">
@@ -118,61 +112,79 @@ function DashboardTable({
 
 export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
-  const passengers = useSelector((state: RootState) => state.passenger.data);
-  const drivers = useSelector((state: RootState) => state.driver.data);
-  const rides = useSelector((state: RootState) => state.ride.data);
+  const passengerState = useSelector((state: RootState) => state.passenger);
+  const driverState = useSelector((state: RootState) => state.driver);
+  const rideState = useSelector((state: RootState) => state.ride);
 
   useEffect(() => {
-    dispatch(fetchAllPassengersThunk());
-    dispatch(fetchAllDriversThunk());
-    dispatch(fetchAllRidesThunk());
+    dispatch(fetchAllPassengersThunk(latestQuery));
+    dispatch(fetchAllDriversThunk(latestQuery));
+    dispatch(fetchAllRidesThunk(latestQuery));
   }, [dispatch]);
 
-  const recentPassengers = getRecentItems(passengers);
-  const recentDrivers = getRecentItems(drivers);
-  const recentRides = getRecentItems(rides);
+  const recentPassengers = Array.isArray(passengerState.data)
+    ? passengerState.data
+    : [];
+  const recentDrivers = Array.isArray(driverState.data) ? driverState.data : [];
+  const recentRides = Array.isArray(rideState.data) ? rideState.data : [];
+  const activePassengerCount = recentPassengers.filter(
+    (passenger: any) => passenger.status === "active",
+  ).length;
+  const onlineActiveDriverCount = recentDrivers.filter(
+    (driver: any) => driver.isOnline === true && driver.status === "active",
+  ).length;
 
   return (
     <>
       <PageMeta title="" description="" />
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard
             label="Total Passengers"
-            value={passengers.length}
+            value={passengerState.pagination.total}
+            icon={<Users size={18} />}
+          />
+          <StatCard
+            label="Active Passengers"
+            value={activePassengerCount}
             icon={<Users size={18} />}
           />
           <StatCard
             label="Total Drivers"
-            value={drivers.length}
+            value={driverState.pagination.total}
+            icon={<Car size={18} />}
+          />
+          <StatCard
+            label="Online Drivers"
+            value={onlineActiveDriverCount}
             icon={<Car size={18} />}
           />
           <StatCard
             label="Total Rides"
-            value={rides.length}
+            value={rideState.pagination.total}
             icon={<Route size={18} />}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <DashboardTable
             title="Newly Added Passengers"
             to="/passengers"
             headers={["ID", "Name", "Contact", "Created"]}
             emptyText="No passengers found."
           >
-            {recentPassengers.map((passenger: any, index) => (
+            {recentPassengers.slice(0, 5).map((passenger: any, index) => (
               <TableRow key={passenger.id || passenger._id || index}>
-                <TableCell className="font-semibold text-gray-700 dark:text-white">
+                <TableCell className="font-semibold text-gray-700 ">
                   {`P${String(index + 1).padStart(3, "0")}`}
                 </TableCell>
-                <TableCell className="max-w-[130px] truncate text-gray-600 dark:text-white">
+                <TableCell className="max-w-[130px] truncate text-gray-600 ">
                   {passenger.name || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500 dark:text-white whitespace-nowrap">
+                <TableCell className="text-gray-500  whitespace-nowrap">
                   {passenger.contactNumber || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500 dark:text-white whitespace-nowrap">
+                <TableCell className="text-gray-500  whitespace-nowrap">
                   {formatDate(passenger.createdAt)}
                 </TableCell>
               </TableRow>
@@ -185,18 +197,18 @@ export default function Home() {
             headers={["ID", "Name", "Contact", "Created"]}
             emptyText="No drivers found."
           >
-            {recentDrivers.map((driver: any, index) => (
+            {recentDrivers.slice(0, 5).map((driver: any, index) => (
               <TableRow key={driver.id || driver._id || index}>
-                <TableCell className="font-semibold text-gray-700 dark:text-white">
+                <TableCell className="font-semibold text-gray-700 ">
                   {`DR${String(index + 1).padStart(3, "0")}`}
                 </TableCell>
-                <TableCell className="max-w-[130px] truncate text-gray-600 dark:text-white">
+                <TableCell className="max-w-[130px] truncate text-gray-600 ">
                   {driver.name || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500 dark:text-white whitespace-nowrap">
+                <TableCell className="text-gray-500  whitespace-nowrap">
                   {driver.contactNumber || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500 dark:text-white whitespace-nowrap">
+                <TableCell className="text-gray-500  whitespace-nowrap">
                   {formatDate(driver.createdAt)}
                 </TableCell>
               </TableRow>
@@ -209,18 +221,18 @@ export default function Home() {
             headers={["Ride", "Passenger", "Driver", "Date"]}
             emptyText="No rides found."
           >
-            {recentRides.map((ride: any, index) => (
+            {recentRides.slice(0, 5).map((ride: any, index) => (
               <TableRow key={ride.rideId || `${ride.createdAt}-${index}`}>
-                <TableCell className="font-semibold text-gray-700 dark:text-white whitespace-nowrap">
+                <TableCell className="font-semibold text-gray-700  whitespace-nowrap">
                   {`RI${String(index + 1).padStart(3, "0")}`}
                 </TableCell>
-                <TableCell className="max-w-[120px] truncate text-gray-500 dark:text-white">
+                <TableCell className="max-w-[120px] truncate text-gray-500 ">
                   {ride.passenger?.name || "-"}
                 </TableCell>
-                <TableCell className="max-w-[120px] truncate text-gray-500 dark:text-white">
+                <TableCell className="max-w-[120px] truncate text-gray-500 ">
                   {ride.driver?.name || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500 dark:text-white whitespace-nowrap">
+                <TableCell className="text-gray-500  whitespace-nowrap">
                   {formatDate(ride.createdAt)}
                 </TableCell>
               </TableRow>

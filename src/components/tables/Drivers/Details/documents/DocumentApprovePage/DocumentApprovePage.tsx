@@ -1,4 +1,4 @@
-import { Eye, X } from "lucide-react";
+import { ArrowLeft, Eye, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router";
 import { AppDispatch, RootState } from "../../../../../../store/redux/store";
@@ -11,11 +11,14 @@ import {
 import Badge from "../../../../../ui/badge/Badge";
 import { useToast } from "../../../../../ui/toast/ToastContext";
 import { getApiErrorMessage } from "../../../../../../lib/apiError";
+import { useNavigate } from "react-router-dom";
+import { StatusPill } from "../../../../shared/DetailUI";
 
 export default function DocumentApprovePage() {
   const { showToast } = useToast();
 
   const { driverId } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { data: documents } = useSelector(
     (state: RootState) => state.documents
@@ -85,16 +88,24 @@ const handlePreview = async (url: string) => {
   }
 };
   const renderDocCard = (doc: any) => (
-    <div className="border rounded-xl p-4 shadow-sm poppins-semibold-italic bg-white dark:bg-black/20 dark:text-white">
-      <h3 className="font-semibold text-lg capitalize">
-        {doc.documentType} Document
-      </h3>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm   ">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold capitalize text-gray-900 ">
+            {doc.documentType} Document
+          </h3>
+          <p className="mt-1 text-xs text-gray-500">
+            Review uploaded document images and update approval status.
+          </p>
+        </div>
+        <StatusPill value={doc.status} />
+      </div>
 
-      <div className="flex gap-3 mb-3">
+      <div className="mb-3 flex flex-wrap gap-2">
         {doc.frontImage && (
           <Badge
             onClick={() => handlePreview(doc.frontImage)}
-            className="flex items-center gap-2 px-3 py-2"
+            className="flex cursor-pointer items-center gap-2 px-3 py-2"
           >
             <Eye size={16} /> Front
           </Badge>
@@ -103,33 +114,16 @@ const handlePreview = async (url: string) => {
         {doc.backImage && (
           <Badge
             onClick={() => handlePreview(doc.backImage)}
-            className="flex items-center gap-2 px-3 py-2"
+            className="flex cursor-pointer items-center gap-2 px-3 py-2"
           >
             <Eye size={16} /> Back
           </Badge>
         )}
       </div>
 
-      <p className="text-sm font-medium">
-        Status:{" "}
-        <Badge
-          color={
-            doc.status === "approved"
-              ? "success"
-              : doc.status === "rejected"
-              ? "error"
-              : "warning"
-          }
-          variant="light"
-          size="sm"
-        >
-          {doc.status}
-        </Badge>
-      </p>
-
       <textarea
         placeholder="Add remarks (optional)"
-        className="w-full mt-3 border rounded-lg p-2 text-sm"
+        className="mt-1 min-h-24 w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-700 placeholder-gray-400 focus:border-gray-500 focus:outline-none   "
         value={remarksByDoc[doc.documentType] || ""}
         onChange={(e) =>
           setRemarksByDoc({
@@ -139,9 +133,9 @@ const handlePreview = async (url: string) => {
         }
       ></textarea>
 
-      <div className="flex gap-3 mt-4">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Badge
-          className="cursor-pointer"
+          className="cursor-pointer px-3 py-1.5"
           color="success"
           onClick={() => handleUpdate(doc.documentType, "approved")}
         >
@@ -149,7 +143,7 @@ const handlePreview = async (url: string) => {
         </Badge>
 
         <Badge
-          className="cursor-pointer"
+          className="cursor-pointer px-3 py-1.5"
           color="error"
           onClick={() => handleUpdate(doc.documentType, "rejected")}
         >
@@ -161,36 +155,56 @@ const handlePreview = async (url: string) => {
 
   return (
     <>
-      <div className="p-6">
-        <h2 className="text-2xl font-semibold mb-4 dark:text-white">Driver Documents</h2>
+      <div className="space-y-4 p-3 sm:p-4 lg:p-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900  "
+        >
+          <ArrowLeft size={17} /> Back
+        </button>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {driverDocs.map((doc) => renderDocCard(doc))}
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3  ">
+          <h2 className="text-base font-semibold text-gray-900 ">
+            Driver Documents
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Approve or reject documents submitted by this driver.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {driverDocs.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500  ">
+              No documents found for this driver.
+            </div>
+          ) : (
+            driverDocs.map((doc) => renderDocCard(doc))
+          )}
         </div>
       </div>
 
     {previewImage && (
   <div
-    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-6"
+    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100000] p-3 sm:p-6"
     onClick={() => {
       setPreviewImage(null);
       setPreviewZoom(false);
     }}
   >
     <div
-      className="relative bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-xl shadow-xl 
+      className="relative bg-white  p-3 sm:p-4 rounded-xl shadow-xl 
                  w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-3xl"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Close Button */}
       <button
-        className="absolute top-3 right-3 p-1 bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        className="absolute top-3 right-3 p-1 bg-gray-200  rounded-full hover:bg-gray-300  transition"
         onClick={() => {
           setPreviewImage(null);
           setPreviewZoom(false);
         }}
       >
-        <X size={18} className="text-black dark:text-white" />
+        <X size={18} className="text-black " />
       </button>
 
       {/* Image */}

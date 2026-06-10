@@ -1,21 +1,54 @@
 import axiosInstance from "./axiosInstance";
+import { cleanGetAllQuery, GetAllQuery } from "./getAllAdapter";
 
 // Document interface for nested structure
 export interface DriverDocuments {
+  aadhaarNumber?: string;
   aadhaarFront?: string;
   aadhaarBack?: string;
   aadhaarStatus: "incomplete" | "pending" | "approved" | "rejected";
+  panNumber?: string;
   panFront?: string;
   panBack?: string;
   panStatus: "incomplete" | "pending" | "approved" | "rejected";
+  licenseNumber?: string;
   licenseFront?: string;
   licenseBack?: string;
   licenseStatus: "incomplete" | "pending" | "approved" | "rejected";
+  rcNumber?: string;
   rcFront?: string;
   rcBack?: string;
   rcStatus: "incomplete" | "pending" | "approved" | "rejected";
+  insuranceNumber?: string;
+  insurance?: string;
+  insuranceStatus?: "incomplete" | "pending" | "approved" | "rejected";
   _id?: string;
 }
+
+interface RatingSummary {
+  average?: number;
+  count?: number;
+}
+
+interface DriverEarnings {
+  totalDriverPayout?: number;
+  totalEarnings?: number;
+  totalPlatformFee?: number;
+}
+
+interface DriverRideStats {
+  completed?: number;
+  cancelled?: number;
+  missed?: number;
+}
+
+export type DriverAccountStatus = "pending" | "active" | "inactive" | "blocked";
+export type DriverApprovalStatus =
+  | "incompleted"
+  | "pending"
+  | "approved"
+  | "rejected";
+export type DriverAvailabilityStatus = "available" | "unavailable" | "on_trip";
 
 // Main driver interface
 export interface Driver {
@@ -25,18 +58,29 @@ export interface Driver {
   email?: string;
   contactNumber: string;
   city?: string;
+  gender?: string;
+  dateOfBirth?: string;
   vehicleType?: string;
   vehicleNumber?: string;
   licenseNumber?: string;
   profileImage?: string;
-  approvalStatus: "incompleted" | "pending" | "approved" | "rejected";
+  approvalStatus: DriverApprovalStatus;
   verificationStatus?: "pending" | "approved" | "rejected";
   documentsVerified?: boolean;
   remarks?: string;
   verificationRemarks?: string;
   otpVerified?: boolean;
   profileCompleted?: boolean;
-  status: "active" | "suspended";
+  isOnline?: boolean;
+  driverStatus?: DriverAvailabilityStatus;
+  lastOnline?: string;
+  lastOffline?: string;
+  latitude?: number;
+  longitude?: number;
+  rating?: RatingSummary;
+  earnings?: DriverEarnings;
+  rideStats?: DriverRideStats;
+  status: DriverAccountStatus;
   createdAt?: string;
   updatedAt?: string;
   documents?: DriverDocuments | null;
@@ -45,9 +89,11 @@ export interface Driver {
 // ===== API CALLS =====
 
 // Get all drivers
-export const fetchAllDrivers = async () => {
-  const response = await axiosInstance.get("/admin/manage/drivers/get-all");
-  return response.data; // { success, drivers }
+export const fetchAllDrivers = async (query: GetAllQuery = {}) => {
+  const response = await axiosInstance.get("/admin/manage/drivers/get-all", {
+    params: cleanGetAllQuery(query),
+  });
+  return response.data;
 };
 
 // Get single driver by ID
@@ -69,13 +115,13 @@ export interface UpdateDriverPayload {
   name?: string;
   email?: string;
   contactNumber?: string;
-  status?: "active" | "suspended";
+  status?: DriverAccountStatus;
 }
 
-// Update driver status (active/suspended)
+// Update driver account status
 export const updateDriverStatus = async (
   id: string,
-  status: "active" | "suspended"
+  status: DriverAccountStatus
 ) => {
   const response = await axiosInstance.put(`/admin/manage/drivers/update-status/${id}`, {
     status,

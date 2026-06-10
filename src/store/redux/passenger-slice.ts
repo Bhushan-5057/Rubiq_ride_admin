@@ -4,8 +4,15 @@ import {
   fetchPassengerById,
   updatePassengerStatus,
   Passenger,
+  PassengerAccountStatus,
 } from "../api/passenger-api";
 import { getApiErrorMessage } from "../../lib/apiError";
+import {
+  defaultPagination,
+  GetAllPagination,
+  GetAllQuery,
+  normalizeGetAllResponse,
+} from "../api/getAllAdapter";
 
 interface PassengerState {
   data: Passenger[];
@@ -13,6 +20,7 @@ interface PassengerState {
   loading: boolean;
   error: string | null;
   message: string | null;
+  pagination: GetAllPagination;
 }
 
 const initialState: PassengerState = {
@@ -21,20 +29,16 @@ const initialState: PassengerState = {
   loading: false,
   error: null,
   message: null,
+  pagination: defaultPagination,
 };
 
 // ✅ Thunks
 export const fetchAllPassengersThunk = createAsyncThunk(
   "passenger/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (query: GetAllQuery | undefined, { rejectWithValue }) => {
     try {
-      const response = await fetchAllPassengers();
-      return (
-        (Array.isArray(response.passengers) ? response.passengers : null) || 
-        (Array.isArray(response.data?.passengers) ? response.data.passengers : null) || 
-        (Array.isArray(response.data) ? response.data : null) || 
-        (Array.isArray(response) ? response : [])
-      );
+      const response = await fetchAllPassengers(query);
+      return normalizeGetAllResponse<Passenger>("passengers", response);
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Fetch All Passengers"));
     }
@@ -56,12 +60,16 @@ export const fetchPassengerByIdThunk = createAsyncThunk(
 export const updatePassengerStatusThunk = createAsyncThunk(
   "passenger/updateStatus",
   async (
-    { id, status }: { id: string; status: "active" | "suspended" },
+    { id, status }: { id: string; status: PassengerAccountStatus },
     { rejectWithValue }
   ) => {
     try {
       const response = await updatePassengerStatus(id, status);
-      return { id, status, message: response.message || "Status updated" };
+      return {
+        id,
+        status: (response.passenger?.status || response.status || status).toLowerCase(),
+        message: response.message || "Status updated",
+      };
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Update Passenger Status"));
     }
@@ -81,11 +89,12 @@ const passengerSlice = createSlice({
       })
       .addCase(fetchAllPassengersThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = (action.payload || []).map((p: any) => ({ 
+        state.data = (action.payload.rows || []).map((p: any) => ({ 
           ...p, 
           id: p._id || p.id,
-          status: (p.status || "suspended").toLowerCase()
+          status: (p.status || "pending").toLowerCase()
         }));
+        state.pagination = action.payload.pagination || defaultPagination;
         state.message = "Passengers fetched successfully";
       })
       .addCase(fetchAllPassengersThunk.rejected, (state, action) => {
@@ -112,7 +121,7 @@ const passengerSlice = createSlice({
         state.selectedPassenger = action.payload ? {
           ...action.payload,
           id: action.payload._id || action.payload.id,
-          status: (action.payload.status || "suspended").toLowerCase()
+          status: (action.payload.status || "pending").toLowerCase()
         } : undefined;
       })
       .addCase(fetchPassengerByIdThunk.rejected, (state, action) => {

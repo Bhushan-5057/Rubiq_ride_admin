@@ -7,11 +7,9 @@ import type { z } from "zod";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import PageMeta from "../components/common/PageMeta";
 import Input from "../components/form/input/InputField";
-import { useToast } from "../components/ui/toast/ToastContext";
 import type { AppDispatch, RootState } from "../store/redux/store";
 import {
   changeAdminPasswordThunk,
-  clearProfileMessages,
   fetchAdminProfileThunk,
   updateAdminProfileThunk,
 } from "../store/redux/profile-slice";
@@ -25,7 +23,6 @@ type PasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 export default function UserProfiles() {
   const dispatch = useDispatch<AppDispatch>();
-  const { showToast } = useToast();
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -36,8 +33,6 @@ export default function UserProfiles() {
     fetchLoading,
     updateLoading,
     passwordLoading,
-    successMessage,
-    error,
   } = useSelector((state: RootState) => state.profile);
 
   const {
@@ -111,51 +106,47 @@ export default function UserProfiles() {
       />
       <PageBreadcrumb pageTitle="Profile" />
 
-      <div className="space-y-6 poppins-semibold-italic">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700">
-                <img
-                  src={profile?.profileImage ? String(profile.profileImage) : "/images/user/owner.jpg"}
-                  alt="Admin"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+      <div className="space-y-4 poppins-semibold-italic">
+        <div className="rounded-lg border border-gray-200 bg-white p-3 lg:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
               <div>
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90">
+                <h3 className="text-base font-semibold text-gray-800">
                   {profile?.name || "Admin"}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500">
                   {profile?.email || "-"}
+                </p>
+                <p className="text-xs text-white bg-green-400 inline-block px-2 py-0.5 rounded-full mt-1">
+                  {profile?.role?.toUpperCase() || "-"}
                 </p>
               </div>
             </div>
             {fetchLoading && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">Loading profile...</span>
+              <span className="text-xs text-gray-500">Loading profile...</span>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 lg:p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-gray-800">
                 Profile Details
               </h4>
               <button
                 type="button"
                 onClick={() => setIsEditingName((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-blue-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5" />
                 {isEditingName ? "Cancel" : "Edit"}
               </button>
             </div>
 
-            <form onSubmit={submitProfile(handleProfileUpdate)} className="space-y-4">
+            <form onSubmit={submitProfile(handleProfileUpdate)} className="space-y-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Name
                 </label>
                 <Controller
@@ -168,6 +159,7 @@ export default function UserProfiles() {
                       error={!!profileErrors.name}
                       disabled={!isEditingName || updateLoading}
                       placeholder="Enter name"
+                      className="h-9 px-3 py-2 text-xs"
                     />
                   )}
                 />
@@ -177,7 +169,7 @@ export default function UserProfiles() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Email
                 </label>
                 <Input
@@ -185,27 +177,28 @@ export default function UserProfiles() {
                   value={profile?.email ? String(profile.email) : ""}
                   disabled
                   readOnly
+                  className="h-9 px-3 py-2 text-xs"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={!isEditingName || updateLoading}
-                className="inline-flex items-center justify-center rounded-lg bg-gray-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-md bg-gray-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {updateLoading ? "Saving..." : "Save Changes"}
               </button>
             </form>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-            <h4 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 lg:p-4">
+            <h4 className="mb-3 text-sm font-semibold text-gray-800">
               Change Password
             </h4>
 
-            <form onSubmit={submitPassword(handlePasswordUpdate)} className="space-y-4">
+            <form onSubmit={submitPassword(handlePasswordUpdate)} className="space-y-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Old Password
                 </label>
                 <Controller
@@ -219,12 +212,12 @@ export default function UserProfiles() {
                         error={!!passwordErrors.oldPassword}
                         disabled={passwordLoading}
                         placeholder="Enter old password"
-                        className="pr-10"
+                        className="h-9 px-3 py-2 pr-9 text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowOldPassword((prev) => !prev)}
-                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700"
+                        className="absolute right-3 top-2 text-gray-400 hover:text-gray-700"
                       >
                         {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -237,7 +230,7 @@ export default function UserProfiles() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   New Password
                 </label>
                 <Controller
@@ -251,12 +244,12 @@ export default function UserProfiles() {
                         error={!!passwordErrors.newPassword}
                         disabled={passwordLoading}
                         placeholder="Enter new password"
-                        className="pr-10"
+                        className="h-9 px-3 py-2 pr-9 text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword((prev) => !prev)}
-                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700"
+                        className="absolute right-3 top-2 text-gray-400 hover:text-gray-700"
                       >
                         {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -269,7 +262,7 @@ export default function UserProfiles() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Confirm Password
                 </label>
                 <Controller
@@ -283,12 +276,12 @@ export default function UserProfiles() {
                         error={!!passwordErrors.confirmPassword}
                         disabled={passwordLoading}
                         placeholder="Confirm new password"
-                        className="pr-10"
+                        className="h-9 px-3 py-2 pr-9 text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
-                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700"
+                        className="absolute right-3 top-2 text-gray-400 hover:text-gray-700"
                       >
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -303,7 +296,7 @@ export default function UserProfiles() {
               <button
                 type="submit"
                 disabled={passwordLoading}
-                className="inline-flex items-center justify-center rounded-lg bg-gray-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-md bg-gray-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {passwordLoading ? "Updating..." : "Update Password"}
               </button>

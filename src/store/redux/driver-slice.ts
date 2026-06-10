@@ -1,11 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   Driver,
+  DriverAccountStatus,
   fetchAllDrivers,
   fetchDriverById,
   updateDriverStatus,
 } from "../api/driver-api";
 import { getApiErrorMessage } from "../../lib/apiError";
+import {
+  defaultPagination,
+  GetAllPagination,
+  GetAllQuery,
+  normalizeGetAllResponse,
+} from "../api/getAllAdapter";
 
 interface DriverState {
   data: Driver[];
@@ -13,6 +20,7 @@ interface DriverState {
   loading: boolean;
   error: string | null;
   message: string | null;
+  pagination: GetAllPagination;
 }
 
 const initialState: DriverState = {
@@ -21,22 +29,16 @@ const initialState: DriverState = {
   loading: false,
   error: null,
   message: null,
+  pagination: defaultPagination,
 };
 
 // Thunks
 export const fetchAllDriversThunk = createAsyncThunk(
   "driver/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (query: GetAllQuery | undefined, { rejectWithValue }) => {
     try {
-      const response = await fetchAllDrivers();
-      // Aggressively look for the drivers array in common locations
-      const drivers = 
-        (Array.isArray(response.drivers) ? response.drivers : null) || 
-        (Array.isArray(response.data?.drivers) ? response.data.drivers : null) || 
-        (Array.isArray(response.data) ? response.data : null) || 
-        (Array.isArray(response) ? response : []);
-        
-      return Array.isArray(drivers) ? drivers : [];
+      const response = await fetchAllDrivers(query);
+      return normalizeGetAllResponse<Driver>("drivers", response);
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Fetch All Drivers"));
     }
@@ -58,12 +60,16 @@ export const fetchDriverByIdThunk = createAsyncThunk(
 export const updateDriverStatusThunk = createAsyncThunk(
   "driver/updateStatus",
   async (
-    { id, status }: { id: string; status: "active" | "suspended" },
+    { id, status }: { id: string; status: DriverAccountStatus },
     { rejectWithValue }
   ) => {
     try {
       const res = await updateDriverStatus(id, status);
-      return { id, status: res.driver.status, message: res.message };
+      return {
+        id,
+        status: (res.driver?.status || res.status || status).toLowerCase(),
+        message: res.message,
+      };
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Update Driver Status"));
     }
@@ -84,12 +90,13 @@ const driverSlice = createSlice({
       })
       .addCase(fetchAllDriversThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = (action.payload || []).map((d: any) => ({
+        state.data = (action.payload.rows || []).map((d: any) => ({
           ...d,
           id: d._id || d.id,
-          status: (d.status || "suspended").toLowerCase(),
+          status: (d.status || "pending").toLowerCase(),
           documents: d.documents ?? {},
         }));
+        state.pagination = action.payload.pagination || defaultPagination;
       })
 
       .addCase(fetchAllDriversThunk.rejected, (state, action) => {
@@ -107,7 +114,7 @@ const driverSlice = createSlice({
         state.selectedDriver = action.payload ? {
           ...action.payload,
           id: action.payload._id || action.payload.id,
-          status: (action.payload.status || "suspended").toLowerCase(),
+          status: (action.payload.status || "pending").toLowerCase(),
           documents: action.payload.documents ?? {}
         } : undefined;
       })

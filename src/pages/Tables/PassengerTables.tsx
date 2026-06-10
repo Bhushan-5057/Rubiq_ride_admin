@@ -8,10 +8,10 @@ export default function PassengerTable() {
   return (
     <>
       <PageMeta
-        title=" Passenger's Tables Dashboard |"
-        description="Passenger's Table"
+        title="Passengers Management |"
+        description="Passengers Management"
       />
-      <PageBreadcrumb pageTitle="Passenger's" />
+      <PageBreadcrumb pageTitle="Passengers Management" />
       <div className="space-y-4">
         <PassengerTableOne/>
       </div>

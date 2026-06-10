@@ -8,10 +8,10 @@ export default function DriverTable() {
   return (
     <>
       <PageMeta
-        title="Driver Tables Dashboard |"
-        description="Driver Table"
+        title="Drivers Management |"
+        description="Drivers Management"
       />
-      <PageBreadcrumb pageTitle="Driver's"  />
+      <PageBreadcrumb pageTitle="Drivers Management"  />
       <div className="space-y-4">
         <DriverTableOne />
       </div>

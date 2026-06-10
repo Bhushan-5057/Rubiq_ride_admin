@@ -30,7 +30,7 @@ export const fetchAllDocumentsThunk = createAsyncThunk<
   "documents/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetchAllDrivers();
+      const response = await fetchAllDrivers({ limit: 1000 });
       const drivers = 
         (Array.isArray(response.drivers) ? response.drivers : null) || 
         (Array.isArray(response.data?.drivers) ? response.data.drivers : null) || 

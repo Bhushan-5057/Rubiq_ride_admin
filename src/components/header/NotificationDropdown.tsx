@@ -66,13 +66,13 @@ const mockAppointments = [
 const NotificationSkeleton = () => (
   <div className="flex items-center justify-between px-4 py-3 animate-pulse">
     <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700" />
+      <div className="w-10 h-10 rounded-full bg-gray-300 " />
       <div>
-        <div className="h-3 w-28 bg-gray-300 dark:bg-gray-700 rounded mb-2" />
-        <div className="h-2 w-20 bg-gray-200 dark:bg-gray-600 rounded" />
+        <div className="h-3 w-28 bg-gray-300  rounded mb-2" />
+        <div className="h-2 w-20 bg-gray-200  rounded" />
       </div>
     </div>
-    <div className="w-5 h-5 bg-gray-300 dark:bg-gray-700 rounded" />
+    <div className="w-5 h-5 bg-gray-300  rounded" />
   </div>
 );
  
@@ -107,7 +107,7 @@ export default function NotificationDropdown() {
       {/* Bell Button */}
       <button
         onClick={toggleDropdown}
-        className="relative flex items-center justify-center h-11 w-11 rounded-full border bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:text-white"
+        className="relative flex items-center justify-center h-11 w-11 rounded-full border bg-white  text-gray-500  hover:bg-gray-100 hover:text-gray-700 "
       >
         {appointments.some((a) => !a.view) && (
           <span className="absolute top-1 right-1 h-2 w-2 bg-orange-400 rounded-full animate-ping" />
@@ -158,20 +158,20 @@ export default function NotificationDropdown() {
           `}</style>
  
           <div
-            className="notification-dropdown dark:bg-gray-dark"
+            className="notification-dropdown "
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-4 border-b dark:bg-gray-800 dark:border-gray-700">
-              <h5 className="font-semibold text-gray-800 dark:text-white ">Notifications</h5>
+            <div className="flex justify-between items-center p-4 border-b  ">
+              <h5 className="font-semibold text-gray-800  ">Notifications</h5>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+                className="text-gray-500 hover:text-gray-700  "
               >
                 ✕
               </button>
             </div>
  
-            <div className="max-h-[380px] overflow-y-auto dark:bg-gray-dark">
+            <div className="max-h-[380px] overflow-y-auto ">
               {loading ? (
                 <>
                   <NotificationSkeleton />
@@ -179,12 +179,12 @@ export default function NotificationDropdown() {
                   <NotificationSkeleton />
                 </>
               ) : appointments.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-4">No notifications</p>
+                <p className="text-center text-gray-500  py-4">No notifications</p>
               ) : (
                 appointments.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-blue-950 transition cursor-pointer"
+                    className="flex items-center gap-3 p-4 hover:bg-gray-50  transition cursor-pointer"
                   >
                     <div className="relative">
                       <img
@@ -197,8 +197,8 @@ export default function NotificationDropdown() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800 dark:text-white">{item.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-sm font-medium text-gray-800 ">{item.name}</p>
+                      <p className="text-xs text-gray-500 ">
                         {item.reason_of_meeting} • {formatTimeAgo(item.createdAt)}
                       </p>
                     </div>
@@ -208,10 +208,10 @@ export default function NotificationDropdown() {
             </div>
  
             {appointments.length > 0 && (
-              <div className="border-t dark:border-gray-700 dark:bg-gray-800">
+              <div className="border-t  ">
                 <button
                   onClick={() => alert("View All clicked")}
-                  className="w-full py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-200"
+                  className="w-full py-3 text-sm font-medium text-blue-600 hover:bg-blue-50  "
                 >
                   View All Notifications
                 </button>

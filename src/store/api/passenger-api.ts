@@ -1,4 +1,7 @@
 import axiosInstance from "./axiosInstance";
+import { cleanGetAllQuery, GetAllQuery } from "./getAllAdapter";
+
+export type PassengerAccountStatus = "active" | "inactive" | "blocked" | "pending";
 
 export interface Passenger {
   createdAt: string | number | Date;
@@ -8,12 +11,32 @@ export interface Passenger {
   profileImage?: string;
   contactNumber: string;
   email?: string;
-  status: "active" | "suspended";
+  dateOfBirth?: string | number | Date;
+  gender?: string;
+  otpVerified?: boolean;
+  profileCompleted?: boolean;
+  updatedAt?: string | number | Date;
+  lastLogoutAt?: string | number | Date;
+  location?: {
+    type?: string;
+    coordinates?: number[];
+  };
+  rating?: {
+    average?: number;
+    count?: number;
+  };
+  rideStats?: {
+    completed?: number;
+    cancelled?: number;
+  };
+  status: PassengerAccountStatus;
   id?: string;
 }
 
-export const fetchAllPassengers = async () => {
-  const response = await axiosInstance.get("/admin/manage/passengers/get-all");
+export const fetchAllPassengers = async (query: GetAllQuery = {}) => {
+  const response = await axiosInstance.get("/admin/manage/passengers/get-all", {
+    params: cleanGetAllQuery(query),
+  });
   return response.data;
 };
 
@@ -30,12 +53,12 @@ export interface UpdatePassengerPayload {
   name?: string;
   contactNumber?: string;
   email?: string;
-  status?: "active" | "suspended";
+  status?: PassengerAccountStatus;
 }
 
 export const updatePassengerStatus = async (
   id: string,
-  status: "active" | "suspended"
+  status: PassengerAccountStatus
 ) => {
   const response = await axiosInstance.put(
     `/admin/manage/passengers/update-status/${id}`,

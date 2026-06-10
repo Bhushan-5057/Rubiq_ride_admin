@@ -1,264 +1,285 @@
-import { MapPin, User, Bike, Phone, Mail, ArrowLeft } from "lucide-react";
-
+import { useEffect, useState, type ReactNode } from "react";
+import { ArrowLeft, Bike, Mail, MapPin, Phone, Route, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { formatDate } from "../../../../lib/utils";
+import {
+  Section,
+  StatCard,
+  StarRating,
+  StatusPill,
+} from "../../shared/DetailUI";
+import { Feedback, getAllFeedback } from "../../../../store/api/feedback-api";
+import { getApiErrorMessage } from "../../../../lib/apiError";
+import { useToast } from "../../../ui/toast/ToastContext";
+import {
+  formatFeedbackDateTime,
+  roleLabel,
+  UserSummary,
+} from "../../Feedback/FeedbackShared";
 
-import Badge from "../../../ui/badge/Badge";
+function DetailLine({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-gray-100 py-2.5 last:border-b-0  sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-500 ">
+        {label}
+      </span>
+      <span className="min-w-0 text-sm font-medium text-gray-900  sm:text-right">
+        {children || "N/A"}
+      </span>
+    </div>
+  );
+}
+
+const getRideFeedbackErrorMessage = (error: unknown) => {
+  const message = getApiErrorMessage(error, "Fetch Ride Feedback");
+  if (message.includes("Schema hasn't been registered for model")) {
+    return "Feedback API is currently misconfigured on the backend.";
+  }
+  return message;
+};
 
 export default function RideDetailsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const ride: any = location.state;
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
-  const ride = location.state;
+  useEffect(() => {
+    const rideId = ride?.rideId || ride?._id;
+    if (!rideId) return;
+
+    let isMounted = true;
+
+    const fetchRideFeedback = async () => {
+      setFeedbackLoading(true);
+      setFeedbackError(null);
+      try {
+        const result = await getAllFeedback({
+          rideId,
+          page: 1,
+          limit: 20,
+        });
+        if (isMounted) setFeedbacks(result.feedbacks);
+      } catch (error) {
+        if (!isMounted) return;
+        const message = getRideFeedbackErrorMessage(error);
+        setFeedbackError(message);
+        showToast(message, "error");
+      } finally {
+        if (isMounted) setFeedbackLoading(false);
+      }
+    };
+
+    fetchRideFeedback();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [ride]);
 
   if (!ride) {
     return (
-      <div className="p-4 sm:p-6 text-center text-red-500">
-        Ride details not found
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-4 text-center">
+        <p className="text-sm font-medium text-red-500">
+          Ride details not found.
+        </p>
+        <button
+          onClick={() => navigate("/rides")}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900  "
+        >
+          <ArrowLeft size={16} /> Back to Ride List
+        </button>
       </div>
     );
   }
 
+  const pickupLat = ride.pickup?.coordinates?.[1];
+  const pickupLng = ride.pickup?.coordinates?.[0];
+  const dropLat = ride.drop?.coordinates?.[1];
+  const dropLng = ride.drop?.coordinates?.[0];
+
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      {/* Back Button */}
-      <div className="mb-4">
-        <button
-          onClick={() => navigate("/rides")}
-          className="group flex items-center gap-2 text-sm sm:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-blue-400 transition-all duration-200"
-        >
-          <ArrowLeft
-            size={18}
-            className="transition-transform duration-200 group-hover:-translate-x-1"
-          />
+    <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-4 lg:p-6">
+      <button
+        onClick={() => navigate("/rides")}
+        className="flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-900  "
+      >
+        <ArrowLeft size={17} /> Back to Ride List
+      </button>
 
-          <span>Back to Ride List</span>
-        </button>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white dark:bg-[#111827] dark:border-gray-800 shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-4">
+      <section className="rounded-lg border border-gray-200 bg-white p-4   sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white break-words">
-              Ride Details
-            </h2>
-
-            <p className="text-sm text-gray-500 mt-1 break-all">
-              Ride ID: {ride.rideId}
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="break-all text-xl font-semibold text-gray-900  sm:text-2xl">
+                Ride Details
+              </h1>
+              <StatusPill value={ride.status} />
+            </div>
+            <p className="mt-1 break-all text-sm text-gray-500">
+              Ride ID: {ride.rideId || ride._id || "N/A"}
             </p>
           </div>
-
-          <div className="w-fit">
-            <Badge
-              size="sm"
-              variant="light"
-              color={
-                ride.status === "completed"
-                  ? "success"
-                  : ride.status === "accepted"
-                    ? "primary"
-                    : "warning"
-              }
-            >
-              {ride.status}
-            </Badge>
-          </div>
         </div>
+      </section>
 
-        {/* Body */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
-          {/* Passenger */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <User className="text-blue-500 shrink-0" size={20} />
-
-              <h3 className="font-semibold text-base sm:text-lg dark:text-white">
-                Passenger Details
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">
-                <span className="font-medium">Name:</span>{" "}
-                {ride.passenger?.name}
-              </p>
-
-              <p className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 break-all">
-                <Phone size={16} className="shrink-0" />
-                {ride.passenger?.contactNumber}
-              </p>
-
-              <p className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 break-all">
-                <Mail size={16} className="shrink-0" />
-                {ride.passenger?.email}
-              </p>
-            </div>
-          </div>
-
-          {/* Driver */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Bike className="text-green-500 shrink-0" size={20} />
-
-              <h3 className="font-semibold text-base sm:text-lg dark:text-white">
-                Driver Details
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">
-                <span className="font-medium">Name:</span> {ride.driver?.name}
-              </p>
-
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-all">
-                <span className="font-medium">Vehicle:</span>{" "}
-                {ride.driver?.vehicleNumber}
-              </p>
-
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">
-                <span className="font-medium">Type:</span>{" "}
-                {ride.driver?.vehicleType}
-              </p>
-
-              <p className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 break-all">
-                <Phone size={16} className="shrink-0" />
-                {ride.driver?.contactNumber}
-              </p>
-            </div>
-          </div>
-
-          {/* Pickup */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="text-green-500 shrink-0" size={20} />
-
-              <h3 className="font-semibold text-base sm:text-lg dark:text-white">
-                Pickup Location
-              </h3>
-            </div>
-
-            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words">
-              {ride.pickup?.address}
-            </p>
-
-            <div className="mt-3 text-sm text-gray-500 break-all">
-              <p>Lat: {ride.pickup?.coordinates?.[1]}</p>
-
-              <p>Lng: {ride.pickup?.coordinates?.[0]}</p>
-            </div>
-          </div>
-
-          {/* Drop */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="text-red-500 shrink-0" size={20} />
-
-              <h3 className="font-semibold text-base sm:text-lg dark:text-white">
-                Drop Location
-              </h3>
-            </div>
-
-            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words">
-              {ride.drop?.address}
-            </p>
-
-            <div className="mt-3 text-sm text-gray-500 break-all">
-              <p>Lat: {ride.drop?.coordinates?.[1]}</p>
-
-              <p>Lng: {ride.drop?.coordinates?.[0]}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* One Full Width Ride Route Map */}
-        <div className="px-4 sm:px-6 pb-6">
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-            <h3 className="text-base sm:text-lg font-semibold mb-4 dark:text-white">
-              Ride Route Map
-            </h3>
-
-            {/* Coordinates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              <div>
-                <p className="text-sm font-medium text-green-500">
-                  Pickup Coordinates
-                </p>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
-                  Lat: {ride.pickup?.coordinates?.[1]}
-                </p>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
-                  Lng: {ride.pickup?.coordinates?.[0]}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-red-500">
-                  Drop Coordinates
-                </p>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
-                  Lat: {ride.drop?.coordinates?.[1]}
-                </p>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
-                  Lng: {ride.drop?.coordinates?.[0]}
-                </p>
-              </div>
-            </div>
-
-            {/* Full Width Route Map */}
-            <div className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-              <iframe
-                title="ride-route-map"
-                width="100%"
-                height="500"
-                className="w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px]"
-                loading="lazy"
-                src={`https://maps.google.com/maps?saddr=${ride.pickup?.coordinates?.[1]},${ride.pickup?.coordinates?.[0]}&daddr=${ride.drop?.coordinates?.[1]},${ride.drop?.coordinates?.[0]}&output=embed`}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 min-w-0">
-              <p className="text-sm text-gray-500">Distance</p>
-
-              <h4 className="text-lg font-semibold dark:text-white break-words">
-                {ride.distance} km
-              </h4>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 min-w-0">
-              <p className="text-sm text-gray-500">Fare</p>
-
-              <h4 className="text-lg font-semibold dark:text-white break-words">
-                ₹ {ride.fareEstimate}
-              </h4>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 min-w-0">
-              <p className="text-sm text-gray-500">Created</p>
-
-              <h4 className="text-sm font-semibold dark:text-white break-words">
-                {new Date(ride.createdAt).toLocaleString()}
-              </h4>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 min-w-0">
-              <p className="text-sm text-gray-500">Updated</p>
-
-              <h4 className="text-sm font-semibold dark:text-white break-words">
-                {new Date(ride.updatedAt).toLocaleString()}
-              </h4>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Distance" value={`${ride.distance ?? 0} km`} />
+        <StatCard label="Fare Estimate" value={`Rs. ${ride.fareEstimate ?? 0}`} />
+        <StatCard label="Created" value={formatDate(ride.createdAt)} />
+        <StatCard label="Updated" value={formatDate(ride.updatedAt)} />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Section title="Passenger">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+            <User size={18} className="text-blue-500" />
+            Passenger Details
+          </div>
+          <div className="rounded-lg bg-gray-50 px-3 ">
+            <DetailLine label="Name">{ride.passenger?.name || "N/A"}</DetailLine>
+            <DetailLine label="Contact">
+              <span className="inline-flex items-center gap-1">
+                <Phone size={14} /> {ride.passenger?.contactNumber || "N/A"}
+              </span>
+            </DetailLine>
+            <DetailLine label="Email">
+              <span className="inline-flex items-center gap-1 break-all">
+                <Mail size={14} /> {ride.passenger?.email || "N/A"}
+              </span>
+            </DetailLine>
+          </div>
+        </Section>
+
+        <Section title="Driver">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+            <Bike size={18} className="text-green-500" />
+            Driver Details
+          </div>
+          <div className="rounded-lg bg-gray-50 px-3 ">
+            <DetailLine label="Name">{ride.driver?.name || "Not assigned"}</DetailLine>
+            <DetailLine label="Vehicle Number">
+              {ride.driver?.vehicleNumber || "N/A"}
+            </DetailLine>
+            <DetailLine label="Vehicle Type">
+              {ride.driver?.vehicleType || "N/A"}
+            </DetailLine>
+            <DetailLine label="Contact">
+              <span className="inline-flex items-center gap-1">
+                <Phone size={14} /> {ride.driver?.contactNumber || "N/A"}
+              </span>
+            </DetailLine>
+          </div>
+        </Section>
+      </div>
+
+      <Section title="Feedback">
+        {feedbackLoading ? (
+          <p className="text-sm text-gray-500">Loading feedback...</p>
+        ) : feedbackError ? (
+          <p className="text-sm text-red-500">{feedbackError}</p>
+        ) : feedbacks.length === 0 ? (
+          <p className="text-sm text-gray-500">No feedback found for this ride</p>
+        ) : (
+          <div className="space-y-3">
+            {feedbacks.map((feedback) => (
+              <div
+                key={feedback._id}
+                className="rounded-lg border border-gray-200 p-3 "
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <StarRating value={feedback.rating || 0} />
+                    <p className="mt-2 break-words text-sm leading-6 text-gray-700 ">
+                      {feedback.comment || "No comment provided."}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {formatFeedbackDateTime(feedback.createdAt)}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-md bg-gray-50 p-3 ">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Given By
+                      </p>
+                      <StatusPill
+                        value={feedback.givenBy}
+                        label={roleLabel(feedback.givenBy)}
+                      />
+                    </div>
+                    <UserSummary user={feedback.givenByUser} />
+                  </div>
+
+                  <div className="rounded-md bg-gray-50 p-3 ">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Given To
+                      </p>
+                      <StatusPill
+                        value={feedback.givenTo}
+                        label={roleLabel(feedback.givenTo)}
+                      />
+                    </div>
+                    <UserSummary user={feedback.givenToUser} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Route">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-gray-200 p-3 ">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+              <MapPin size={18} className="text-green-500" />
+              Pickup
+            </div>
+            <p className="text-sm leading-6 text-gray-700 ">
+              {ride.pickup?.address || "N/A"}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-3 ">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+              <MapPin size={18} className="text-red-500" />
+              Drop
+            </div>
+            <p className="text-sm leading-6 text-gray-700 ">
+              {ride.drop?.address || "N/A"}
+            </p>
+          </div>
+        </div>
+
+        {pickupLat && pickupLng && dropLat && dropLng && (
+          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 ">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900  ">
+              <Route size={17} /> Ride Route Map
+            </div>
+            <iframe
+              title="ride-route-map"
+              width="100%"
+              height="420"
+              className="h-[320px] w-full sm:h-[420px]"
+              loading="lazy"
+              src={`https://maps.google.com/maps?saddr=${pickupLat},${pickupLng}&daddr=${dropLat},${dropLng}&output=embed`}
+            />
+          </div>
+        )}
+      </Section>
     </div>
   );
 }

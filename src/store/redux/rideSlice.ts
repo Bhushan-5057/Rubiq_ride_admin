@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { deleteAllRidesApi, deleteRideById, fetchAllRides, fetchRideById, Ride } from "../api/ride-api";
 import { getApiErrorMessage } from "../../lib/apiError";
+import {
+  defaultPagination,
+  GetAllPagination,
+  GetAllQuery,
+  normalizeGetAllResponse,
+} from "../api/getAllAdapter";
 
 interface RideState {
   data: Ride[];
@@ -8,6 +14,7 @@ interface RideState {
   loading: boolean;
   error: string | null;
   message: string | null;
+  pagination: GetAllPagination;
 }
 
 const initialState: RideState = {
@@ -16,20 +23,16 @@ const initialState: RideState = {
   loading: false,
   error: null,
   message: null,
+  pagination: defaultPagination,
 };
 
 // ✅ Thunks
 export const fetchAllRidesThunk = createAsyncThunk(
   "ride/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (query: GetAllQuery | undefined, { rejectWithValue }) => {
     try {
-      const response = await fetchAllRides();
-      return (
-        (Array.isArray(response.rides) ? response.rides : null) || 
-        (Array.isArray(response.data?.rides) ? response.data.rides : null) || 
-        (Array.isArray(response.data) ? response.data : null) || 
-        (Array.isArray(response) ? response : [])
-      );
+      const response = await fetchAllRides(query);
+      return normalizeGetAllResponse<Ride>("rides", response);
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Fetch All Rides"));
     }
@@ -86,7 +89,8 @@ const rideSlice = createSlice({
       })
       .addCase(fetchAllRidesThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = Array.isArray(action.payload) ? action.payload : [];
+        state.data = Array.isArray(action.payload.rows) ? action.payload.rows : [];
+        state.pagination = action.payload.pagination || defaultPagination;
         state.message = "Rides fetched successfully";
       })
       .addCase(fetchAllRidesThunk.rejected, (state, action) => {

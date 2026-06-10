@@ -79,8 +79,8 @@ export default function SignInForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 poppins-semibold-italic">
-      <div className="w-full max-w-5xl h-auto md:h-[80vh] grid grid-cols-1 md:grid-cols-2 lg:h-120! rounded-3xl overflow-hidden dark:bg-black  backdrop-blur-sm bg-white/80 transition-all duration-300">
-        <div className="relative hidden md:flex flex-col justify-center items-center bg-white dark:bg-gray-900 p-10 overflow-hidden border-r border-gray-100 dark:border-gray-800">
+      <div className="w-full max-w-5xl h-auto md:h-[80vh] grid grid-cols-1 md:grid-cols-2 lg:h-120! rounded-3xl overflow-hidden   backdrop-blur-sm bg-white/80 transition-all duration-300">
+        <div className="relative hidden md:flex flex-col justify-center items-center bg-white  p-10 overflow-hidden border-r border-gray-100 ">
           {/* Decorative shapes - adjusted for white background */}
           <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-brand-500/5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl animate-pulse"></div>
@@ -88,7 +88,7 @@ export default function SignInForm() {
           <div className="absolute top-8 left-8 flex items-center gap-2 z-10">
             <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
             <span className="text-xl font-bold tracking-widest uppercase select-none">
-              <span className="text-gray-800 dark:text-white">RUBIQ</span>
+              <span className="text-gray-800 ">RUBIQ</span>
               <span className="ml-1.5 text-brand-600">RIDE</span>
             </span>
           </div>
@@ -103,10 +103,10 @@ export default function SignInForm() {
         </div>
         <div className="flex flex-col justify-center p-6 sm:p-10 w-full">
           <div className="w-full max-w-sm mx-auto">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white mb-2 text-center md:text-left">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800  mb-2 text-center md:text-left">
               Sign In
             </h1>
-            <p className="text-sm font-semibold dark:text-white text-gray-500 mb-8 text-center md:text-left ">
+            <p className="text-sm font-semibold  text-gray-500 mb-8 text-center md:text-left ">
               Enter your details below
             </p>
 
@@ -176,11 +176,11 @@ export default function SignInForm() {
                 {loading ? "Signing in..." : "Log In"}
               </Button>
             </form>
-            <p className="mt-6 text-sm font-semibold dark:text-white text-gray-500 text-center md:text-left">
+            <p className="mt-6 text-sm font-semibold  text-gray-500 text-center md:text-left">
               Don&apos;t have an account?{" "}
               <Link
                 to="/auth/register"
-                className="text-indigo-500 dark:text-indigo-400 hover:underline"
+                className="text-indigo-500  hover:underline"
               >
                 Sign Up
               </Link>

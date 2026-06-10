@@ -5,6 +5,7 @@ import { useSidebar } from "../context/SidebarContext";
 import {
   Car,
   ChartNoAxesCombined,
+  MessageSquareText,
   MoreHorizontal,
   User2,
   User2Icon,
@@ -54,6 +55,11 @@ const navItems: NavItem[] = [
     icon: <Car />,
     name: "Ride's",
     path: "/rides",
+  },
+  {
+    icon: <MessageSquareText />,
+    name: "Feedback",
+    path: "/feedback",
   },
 ];
 
@@ -332,7 +338,7 @@ const AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed top-0 left-0 z-50 h-screen border-r border-gray-200 bg-white text-gray-900 
-        dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 ease-in-out
+          transition-all duration-300 ease-in-out
         mt-16 lg:mt-0 px-5
         ${
           isExpanded || isMobileOpen
@@ -355,9 +361,9 @@ const AppSidebar: React.FC = () => {
         <Link to="/" className="flex  w-full transition-all duration-300">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="flex  gap-2">
-              <span className="text-center block text-2xl font-semibold tracking-widest text-gray-900 dark:text-white uppercase select-none">
-                <span className="text-gray-700 dark:text-gray-300">RUBIQ</span>
-                <span className="ml-2 text-indigo-500 dark:text-indigo-400">
+              <span className="text-center block text-2xl font-semibold tracking-widest text-gray-900  uppercase select-none">
+                <span className="text-gray-700 ">RUBIQ</span>
+                <span className="ml-2 text-indigo-500 ">
                   RIDE
                 </span>
               </span>
@@ -365,14 +371,14 @@ const AppSidebar: React.FC = () => {
           ) : (
             <ChartNoAxesCombined
               size={32}
-              className="text-indigo-600 dark:text-indigo-400"
+              className="text-indigo-600 "
             />
           )}
         </Link>
       </div>
 
       {/* Divider */}
-      <div className="w-full h-px bg-gray-200 dark:bg-gray-800 mb-6"></div>
+      <div className="w-full h-px bg-gray-200  mb-6"></div>
 
       {/* Navigation Items */}
       <div

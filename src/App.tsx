@@ -20,6 +20,7 @@ import DocumentApprovePage from "./components/tables/Drivers/Details/documents/D
 import AdminTable from "./pages/Tables/admin/AdminTable";
 import PassengerDetails from "./components/tables/Passengers/Details/PassengerDetails";
 import RideDetailsPage from "./components/tables/Rides/Details/RideDetails";
+import FeedbackTable from "./pages/Tables/FeedbackTables";
 
 import GlobalFeedbackListener from "./components/common/GlobalFeedbackListener";
 
@@ -148,6 +149,17 @@ export default function App() {
           />
 
           <Route path="/ride" element={<Navigate to="/rides" replace />} />
+
+          <Route
+            path="/feedback"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <FeedbackTable />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/profile"

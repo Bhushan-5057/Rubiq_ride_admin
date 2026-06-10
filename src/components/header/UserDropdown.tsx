@@ -58,15 +58,15 @@ export default function UserDropdown() {
     <div className="relative poppins-semibold-italic">
       <button
         onClick={toggleDropdown}
-        className="flex items-center text-gray-700 dark:text-gray-300 dropdown-toggle"
+        className="flex items-center text-gray-700  dropdown-toggle"
       >
-        <UserCircleIcon className="w-8 h-8 mr-2 rounded-full text-gray-500 dark:text-gray-400" />
+        <UserCircleIcon className="w-8 h-8 mr-2 rounded-full text-gray-500 " />
         <span className="hidden text-sm font-semibold lg:block mr-1 max-w-[120px] truncate">
           {profile?.name ? String(profile.name) : "Admin"}
         </span>
 
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
+          className={`stroke-gray-500  transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           width="18"
@@ -88,13 +88,13 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg  "
       >
         <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-300 poppins-bold-italic">
+          <span className="block font-medium text-gray-700 text-theme-sm  poppins-bold-italic">
             {profile?.name ? String(profile.name) : "Admin Dashboard"}
           </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400 poppins-bold-italic">
+          <span className="mt-0.5 block text-theme-xs text-gray-500  poppins-bold-italic">
             {profile?.email ? String(profile.email) : "admin@example.com"}
           </span>
         </div>
@@ -102,7 +102,7 @@ export default function UserDropdown() {
         <a
           href="/auth"
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-100"
+          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700   "
         >
           Sign out
         </a>
@@ -110,7 +110,7 @@ export default function UserDropdown() {
         <a
           href="/profile"
           onClick={handleOpenProfile}
-          className="flex items-center gap-3 px-3 py-2 mt-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-100"
+          className="flex items-center gap-3 px-3 py-2 mt-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700   "
         >
           Profile
         </a>

@@ -7,22 +7,23 @@ import {
   updateUserThunk,
   deleteUserThunk,
 } from "../../../store/redux/user-slice";
-import { Search, PencilIcon, Eye, Trash2, Plus, ArrowLeft } from "lucide-react";
+import { PencilIcon, Eye, Trash2, Plus, ArrowLeft } from "lucide-react";
 import Button from "../../ui/button/Button";
 import Badge from "../../ui/badge/Badge";
 import { useToast } from "../../ui/toast/ToastContext";
 import { getApiErrorMessage } from "../../../lib/apiError";
+import { SearchControl } from "../shared/GetAllTableControls";
 
 function FullPageModal({ children, onClose }: any) {
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-50 dark:bg-gray-900 overflow-auto flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 z-[9999] bg-gray-50  overflow-auto flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-white  p-6 rounded-2xl shadow-xl border border-gray-200 ">
         {/* BACK BUTTON: inside form, top of content */}
         <button
           onClick={onClose}
           className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl
-                     bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white
-                     hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                     bg-gray-100  text-gray-900 
+                     hover:bg-gray-200  transition"
         >
           <ArrowLeft size={20} />
           <span className="text-sm font-medium">Back</span>
@@ -153,33 +154,28 @@ export default function AdminTableOne() {
 
   if (loading)
     return (
-      <p className="p-4 text-gray-700 dark:text-gray-200">Loading Admins...</p>
+      <p className="p-4 text-gray-700 ">Loading Admins...</p>
     );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white  ">
       {/* HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-b border-gray-100 dark:border-white/[0.05]">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-          Admin List
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3  sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-sm font-semibold text-gray-800 ">
+          Admins Table
         </h2>
-
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 w-full sm:w-auto">
-            <input
-              type="text"
+          <div className="flex-1 w-full sm:w-auto">
+            <SearchControl
               placeholder="Search name, email..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 pl-10 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              onChange={setSearchTerm}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 pl-10 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-gray-500 focus:outline-none   "
             />
-            <span className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-300">
-              <Search size={16} />
-            </span>
           </div>
 
           <Button
-            className="flex items-center gap-2 px-3 py-1 rounded-xl border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-white"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700  "
             onClick={() => setAddModalOpen(true)}
           >
             <Plus size={10} /> Add Admin
@@ -189,29 +185,29 @@ export default function AdminTableOne() {
 
       {/* TABLE */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] border border-gray-200 dark:border-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="p-3 text-left text-gray-800 dark:text-gray-200">
+        <table className="w-full min-w-[760px] border border-gray-200 ">
+          <thead className="bg-gray-50 ">
+            <tr className="border-b border-gray-200 ">
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 ">
                 Name
               </th>
-              <th className="p-3 text-left text-gray-800 dark:text-gray-200">
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 ">
                 Email
               </th>
-              <th className="p-3 text-left text-gray-800 dark:text-gray-200">
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 ">
                 Role
               </th>
-              <th className="p-3 text-left text-gray-800 dark:text-gray-200">
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 ">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-900">
+          <tbody className="bg-white ">
             {filteredUsers.length === 0 ? (
               <tr>
                 <td
                   colSpan={4}
-                  className="text-center p-4 text-gray-500 dark:text-gray-400"
+                  className="text-center p-4 text-gray-500 "
                 >
                   No admins found.
                 </td>
@@ -220,12 +216,12 @@ export default function AdminTableOne() {
               filteredUsers.map((user) => (
                 <tr
                   key={user._id}
-                  className="border-b border-gray-200 dark:border-gray-700"
+                  className="border-b border-gray-200 "
                 >
-                  <td className="p-3 text-gray-700 dark:text-gray-200">
+                  <td className="p-3 text-sm text-gray-700 ">
                     {user.name}
                   </td>
-                  <td className="p-3 text-gray-700 dark:text-gray-200">
+                  <td className="p-3 text-sm text-gray-700 ">
                     {user.email}
                   </td>
                   <td className="p-3">
@@ -233,8 +229,8 @@ export default function AdminTableOne() {
                       size="sm"
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         user.role === "superadmin"
-                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                          ? "bg-red-100 text-red-800  "
+                          : "bg-blue-100 text-blue-800  "
                       }`}
                     >
                       {user.role}
@@ -249,19 +245,19 @@ export default function AdminTableOne() {
                     >
                       <Eye
                         size={16}
-                        className="text-gray-600 dark:text-gray-200"
+                        className="text-gray-600 "
                       />
                     </button>
                     <button onClick={() => openEditModal(user)}>
                       <PencilIcon
                         size={16}
-                        className="text-green-600 dark:text-green-400"
+                        className="text-green-600 "
                       />
                     </button>
                     <button onClick={() => handleDeleteAdmin(user._id)}>
                       <Trash2
                         size={16}
-                        className="text-red-600 dark:text-red-400"
+                        className="text-red-600 "
                       />
                     </button>
                   </td>
@@ -280,7 +276,7 @@ export default function AdminTableOne() {
               placeholder="Name"
               value={addForm.name}
               onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <input
               type="email"
@@ -289,7 +285,7 @@ export default function AdminTableOne() {
               onChange={(e) =>
                 setAddForm({ ...addForm, email: e.target.value })
               }
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <input
               type="password"
@@ -298,7 +294,7 @@ export default function AdminTableOne() {
               onChange={(e) =>
                 setAddForm({ ...addForm, password: e.target.value })
               }
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <Button
               className="w-full py-3 text-lg"
@@ -321,7 +317,7 @@ export default function AdminTableOne() {
               onChange={(e) =>
                 setEditForm({ ...editForm, name: e.target.value })
               }
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <input
               type="email"
@@ -330,7 +326,7 @@ export default function AdminTableOne() {
               onChange={(e) =>
                 setEditForm({ ...editForm, email: e.target.value })
               }
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <input
               type="password"
@@ -339,7 +335,7 @@ export default function AdminTableOne() {
               onChange={(e) =>
                 setEditForm({ ...editForm, password: e.target.value })
               }
-              className="border rounded-lg px-4 py-3 w-full text-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-white"
+              className="border rounded-lg px-4 py-3 w-full text-lg bg-white  text-gray-700 "
             />
             <Button
               className="w-full py-3 text-lg"
@@ -355,7 +351,7 @@ export default function AdminTableOne() {
       {/* VIEW ADMIN MODAL */}
       {isViewModalOpen && (
         <FullPageModal onClose={() => setViewModalOpen(false)}>
-          <div className="flex flex-col gap-2 text-gray-700 dark:text-white">
+          <div className="flex flex-col gap-2 text-gray-700 ">
             <p>
               <b>Name:</b> {viewUser.name}
             </p>

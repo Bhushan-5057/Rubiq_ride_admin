@@ -1,211 +1,273 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { ArrowLeft, FileText, MapPin, User } from "lucide-react";
 import { AppDispatch, RootState } from "../../../../store/redux/store";
 import { fetchDriverByIdThunk } from "../../../../store/redux/driver-slice";
-import { FileText, MapPin, ArrowLeft } from "lucide-react";
-import Badge from "../../../ui/badge/Badge";
-import { useNavigate } from "react-router-dom";
+import { formatDate } from "../../../../lib/utils";
+import {
+  formatBoolean,
+  InfoGrid,
+  InfoItem,
+  Section,
+  StarRating,
+  StatCard,
+  StatusPill,
+} from "../../shared/DetailUI";
 
+const money = (value?: number) =>
+  typeof value === "number" ? `Rs. ${value.toFixed(2)}` : "Rs. 0.00";
 
-const DriverDetails: React.FC = () => {
+const driverAddress = (driver: any) =>
+  driver.address ||
+  driver.location?.address ||
+  driver.currentLocation?.address ||
+  driver.city ||
+  "Location not set";
+
+const documentItems = (driver: any) => [
+  {
+    label: "Aadhaar",
+    number: driver.documents?.aadhaarNumber,
+    status: driver.documents?.aadhaarStatus,
+    files: [
+      { label: "Front", url: driver.documents?.aadhaarFront },
+      { label: "Back", url: driver.documents?.aadhaarBack },
+    ],
+  },
+  {
+    label: "PAN",
+    number: driver.documents?.panNumber,
+    status: driver.documents?.panStatus,
+    files: [{ label: "Front", url: driver.documents?.panFront }],
+  },
+  {
+    label: "License",
+    number: driver.documents?.licenseNumber || driver.licenseNumber,
+    status: driver.documents?.licenseStatus,
+    files: [
+      { label: "Front", url: driver.documents?.licenseFront },
+      { label: "Back", url: driver.documents?.licenseBack },
+    ],
+  },
+  {
+    label: "RC",
+    number: driver.documents?.rcNumber,
+    status: driver.documents?.rcStatus,
+    files: [
+      { label: "Front", url: driver.documents?.rcFront },
+      { label: "Back", url: driver.documents?.rcBack },
+    ],
+  },
+  {
+    label: "Insurance",
+    number: driver.documents?.insuranceNumber,
+    status: driver.documents?.insuranceStatus,
+    files: [{ label: "File", url: driver.documents?.insurance }],
+  },
+];
+
+export default function DriverDetails() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const {
-    selectedDriver: driver,
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.driver);
+  const { selectedDriver: driver, loading, error } = useSelector(
+    (state: RootState) => state.driver,
+  );
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchDriverByIdThunk(id));
-    }
+    if (id) dispatch(fetchDriverByIdThunk(id));
   }, [dispatch, id]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[80vh]">
-        <p className="text-lg font-medium">Loading driver details...</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm font-medium text-gray-600 ">
+          Loading driver details...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <p className="text-sm font-medium text-red-500">{error}</p>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900  "
+        >
+          <ArrowLeft size={16} /> Back
+        </button>
       </div>
     );
   }
 
   if (!driver) {
     return (
-      <div className="flex justify-center items-center h-[80vh]">
-        <p className="text-lg font-medium text-gray-500">Driver not found.</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm font-medium text-gray-500">Driver not found.</p>
       </div>
     );
   }
 
+  const isRideReady =
+    driver.approvalStatus === "approved" &&
+    driver.profileCompleted === true &&
+    driver.documentsVerified === true &&
+    driver.status === "active" &&
+    driver.isOnline === true &&
+    driver.driverStatus === "available";
+
   return (
-    <div className="max-w-7xl mx-auto mt-8 xl:max-w-full p-4 sm:p-6 md:p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-lg transition-all">
-      {/* Back Button */}
+    <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-4 lg:p-6">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors mb-6 group"
+        className="flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-900  "
       >
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        <span className="font-medium">Back to List</span>
+        <ArrowLeft size={17} /> Back to Drivers
       </button>
 
-      {/* Profile Section */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6 sm:mb-8 relative">
-        <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
-
-          {/* THIN SVG RING */}
-          <svg
-            className="absolute inset-0 w-full h-full -rotate-90"
-            viewBox="0 0 140 140"
-          >
-            <circle
-              cx="70"
-              cy="70"
-              r="63"
-              className={`fill-none stroke-[4] ${driver.status === "suspended"
-                  ? "stroke-red-400"
-                  : "stroke-green-400"
-                }`}
-              strokeLinecap="round"
-              style={{
-                strokeDasharray: "395",
-                strokeDashoffset: "395",
-                animation: "draw-ring 1s forwards ease-out",
-              }}
-            />
-          </svg>
-
-          {/* PROFILE IMAGE */}
-          <img
-            src={driver.profileImage}
-            alt={driver.name}
-            className="
-      w-[88%]
-      h-[88%]
-      rounded-full
-      object-cover
-      border-2 border-white
-      dark:border-gray-900
-      shadow-md
-    "
-          />
-        </div>
-
-        {/* Text Info */}
-        <div className="text-center sm:text-left flex-1 mt-4! sm:mt-0">
-          <h2 className="text-xl sm:text-2xl font-bold dark:text-white">{driver.name}</h2>
-          <p className="text-gray-600 dark:text-gray-300 text-sm mt-1 mb-2 sm:text-base">{driver.email}</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm flex items-center justify-center sm:justify-start gap-1">
-            <MapPin size={14} className="text-red-500" />
-            <Badge color="primary">{driver.city}</Badge>
-          </p>
-        </div>
-      </div>
-
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 sm:mb-8 text-gray-700 dark:text-gray-200">
-        <p><strong>Contact:</strong> {driver.contactNumber}</p>
-        <p><strong>Vehicle Type:</strong> {driver.vehicleType}</p>
-        <p><strong>Vehicle Number:</strong> {driver.vehicleNumber}</p>
-        <p><strong>License Number:</strong> {driver.licenseNumber}</p>
-        <p>
-          <strong>Status:</strong>
-          <span
-            className={`ml-2 px-3 py-1 rounded-full text-sm font-medium border ${driver.status === "active"
-              ? "bg-green-100 text-green-700 border-green-300"
-              : "bg-red-100 text-red-700 border-red-300"
-              }`}
-          >
-            {driver.status}
-          </span>
-        </p>
-        <p>
-          <strong>Approval Status:</strong>
-          <span
-            className={`ml-2 px-3 py-1 rounded-full text-sm font-medium border ${driver.approvalStatus === "approved"
-              ? "bg-green-100 text-green-700 border-green-300"
-              : driver.approvalStatus === "pending"
-                ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                : driver.approvalStatus === "rejected"
-                  ? "bg-red-100 text-red-700 border-red-300"
-                  : "bg-gray-100 text-gray-600 border-gray-300"
-              }`}
-          >
-            {driver.approvalStatus || "Not Available"}
-          </span>
-        </p>
-        <p>
-          <strong>Documents Verified:</strong>
-          <span
-            className={`ml-2 px-3 py-1 rounded-full text-sm font-medium border ${driver.documentsVerified
-              ? "bg-green-100 text-green-700 border-green-300"
-              : "bg-red-100 text-red-700 border-red-300"
-              }`}
-          >
-            {driver.documentsVerified ? "Approved" : "Rejected"}
-          </span>
-        </p>
-        <p className="col-span-full"><strong>Remarks:</strong> {driver.verificationRemarks || "None"}</p>
-      </div>
-
-      {/* Documents Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { label: "Aadhaar", status: driver.documents?.aadhaarStatus, urlFront: driver.documents?.aadhaarFront, urlBack: driver.documents?.aadhaarBack },
-          { label: "PAN", status: driver.documents?.panStatus, urlFront: driver.documents?.panFront },
-          { label: "License", status: driver.documents?.licenseStatus, urlFront: driver.documents?.licenseFront, urlBack: driver.documents?.licenseBack },
-          { label: "RC", status: driver.documents?.rcStatus, urlFront: driver.documents?.rcFront, urlBack: driver.documents?.rcBack },
-        ].map(({ label, status, urlFront, urlBack }) => (
-          <div
-            key={label}
-            className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col items-center gap-2"
-          >
-            <span className="font-medium text-sm sm:text-base dark:text-gray-200">{label}</span>
-            <div
-              className={`flex gap-2 flex-wrap justify-center ${!urlBack && urlFront ? "justify-center" : "justify-start sm:justify-center"
-                }`}
-            >
-              {[urlFront, urlBack].map((url, idx) => {
-                if (!url) return null;
-                const isPDF = url.toLowerCase().endsWith(".pdf");
-                return (
-                  <div
-                    key={idx}
-                    className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded border cursor-pointer hover:scale-105 transition-transform"
-                  >
-                    {isPDF ? (
-                      <FileText size={32} className="text-red-600 dark:text-red-400" />
-                    ) : (
-                      <img
-                        src={url}
-                        alt={`${label} ${idx === 0 ? "Front" : "Back"}`}
-                        className="w-full h-full object-cover rounded"
-                      />
-                    )}
-                  </div>
-                );
-              })}
+      <section className="overflow-hidden rounded-lg border border-gray-200 bg-white  ">
+        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+            {driver.profileImage ? (
+              <img
+                src={driver.profileImage}
+                alt={driver.name || "Driver"}
+                className="h-24 w-24 rounded-full border object-cover"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 ">
+                <User size={34} className="text-gray-400" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="break-words text-xl font-semibold text-gray-900  sm:text-2xl">
+                  {driver.name || driver.contactNumber}
+                </h1>
+                <StatusPill value={driver.status} />
+                <StatusPill value={driver.approvalStatus} />
+              </div>
+              <p className="mt-1 break-all text-sm text-gray-500">
+                {driver.email || "No email"} | {driver.contactNumber}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600 ">
+                <span className="flex items-center gap-1">
+                  <MapPin size={15} className="text-red-500" />
+                  {driver.city || "Location not set"}
+                </span>
+                <StarRating
+                  value={driver.rating?.average}
+                  count={driver.rating?.count}
+                />
+              </div>
             </div>
-            <Badge
-              className={`px-2 py-0.5 text-xs sm:text-sm font-semibold rounded-full border ${status === "approved"
-                ? "bg-green-100 text-green-700 border-green-300"
-                : status === "pending"
-                  ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                  : status === "rejected"
-                    ? "bg-red-100 text-red-700 border-red-300"
-                    : "bg-gray-100 text-gray-600 border-gray-300"
-                }`}
-            >
-              {status || "Not Uploaded"}
-            </Badge>
           </div>
-        ))}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Completed Rides" value={driver.rideStats?.completed ?? 0} />
+        <StatCard label="Cancelled" value={driver.rideStats?.cancelled ?? 0} />
+        <StatCard label="Missed" value={driver.rideStats?.missed ?? 0} />
+        <StatCard label="Total Earnings" value={money(driver.earnings?.totalEarnings)} />
       </div>
+
+      <Section title="Account Details">
+        <InfoGrid>
+          <InfoItem label="Gender" value={driver.gender} />
+          <InfoItem label="Date of Birth" value={formatDate(driver.dateOfBirth)} />
+          <InfoItem label="Account Status">
+            <StatusPill value={driver.status} />
+          </InfoItem>
+          <InfoItem label="Approval Status">
+            <StatusPill value={driver.approvalStatus} />
+          </InfoItem>
+          <InfoItem label="Online">
+            <StatusPill value={driver.isOnline} />
+          </InfoItem>
+          <InfoItem label="Availability">
+            <StatusPill value={driver.driverStatus} />
+          </InfoItem>
+          <InfoItem label="Ride Ready">
+            <StatusPill value={isRideReady} />
+          </InfoItem>
+          <InfoItem label="OTP Verified" value={formatBoolean(driver.otpVerified)} />
+          <InfoItem label="Profile Completed" value={formatBoolean(driver.profileCompleted)} />
+          <InfoItem label="Documents Verified" value={formatBoolean(driver.documentsVerified)} />
+          <InfoItem label="Created At" value={formatDate(driver.createdAt)} />
+          <InfoItem label="Updated At" value={formatDate(driver.updatedAt)} />
+          <InfoItem label="Last Online" value={formatDate(driver.lastOnline)} />
+          <InfoItem label="Last Offline" value={formatDate(driver.lastOffline)} />
+          <InfoItem label="Location" value={driverAddress(driver)} />
+          <InfoItem label="Verification Remarks" value={driver.verificationRemarks || driver.remarks || "None"} />
+        </InfoGrid>
+      </Section>
+
+      <Section title="Vehicle & Earnings">
+        <InfoGrid>
+          <InfoItem label="Vehicle Type" value={driver.vehicleType} />
+          <InfoItem label="Vehicle Number" value={driver.vehicleNumber} />
+          <InfoItem label="License Number" value={driver.documents?.licenseNumber || driver.licenseNumber} />
+          <InfoItem label="Driver Payout" value={money(driver.earnings?.totalDriverPayout)} />
+          <InfoItem label="Platform Fee" value={money(driver.earnings?.totalPlatformFee)} />
+          <InfoItem label="Total Earnings" value={money(driver.earnings?.totalEarnings)} />
+        </InfoGrid>
+      </Section>
+
+      <Section title="Driver Documents">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {documentItems(driver).map((document) => (
+            <div
+              key={document.label}
+              className="rounded-lg border border-gray-200 p-3 "
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 ">
+                    {document.label}
+                  </h4>
+                  <p className="mt-1 break-all text-xs text-gray-500">
+                    {document.number || "Number not available"}
+                  </p>
+                </div>
+                <StatusPill value={document.status} />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {document.files.map((file) =>
+                  file.url ? (
+                    <a
+                      key={file.label}
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group overflow-hidden rounded-md border border-gray-200 bg-gray-50  "
+                    >
+                      {file.url.toLowerCase().endsWith(".pdf") ? (
+                        <div className="flex h-28 items-center justify-center">
+                          <FileText className="text-red-500" />
+                        </div>
+                      ) : (
+                        <img
+                          src={file.url}
+                          alt={`${document.label} ${file.label}`}
+                          className="h-28 w-full object-cover transition group-hover:scale-105"
+                        />
+                      )}
+                      <span className="block px-2 py-1 text-xs font-medium text-gray-600 ">
+                        {file.label}
+                      </span>
+                    </a>
+                  ) : null,
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
     </div>
-
   );
-};
-
-export default DriverDetails;
+}

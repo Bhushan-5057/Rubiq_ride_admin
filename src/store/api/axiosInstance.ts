@@ -57,9 +57,10 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    const suppressGlobalFeedback = (response.config as any)?.suppressGlobalFeedback;
     // Success handling: Dispatch message if present in response data
     const message = response.data?.message;
-    if (message && typeof message === "string") {
+    if (!suppressGlobalFeedback && message && typeof message === "string") {
       feedbackDispatcher?.success(message);
     }
     return response;
@@ -110,7 +111,10 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    feedbackDispatcher?.error(uiMessage);
+    const suppressGlobalFeedback = (error.config as any)?.suppressGlobalFeedback;
+    if (!suppressGlobalFeedback) {
+      feedbackDispatcher?.error(uiMessage);
+    }
 
     return Promise.reject(error);
   }

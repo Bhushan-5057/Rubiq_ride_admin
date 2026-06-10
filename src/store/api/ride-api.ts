@@ -1,8 +1,9 @@
 import axiosInstance from "./axiosInstance";
+import { cleanGetAllQuery, GetAllQuery } from "./getAllAdapter";
 
 export interface Ride {
   rideId: string;
-  status: "pending" | "accepted" | "completed" | "canceled";
+  status: string;
    distance: number;
   fareEstimate: number;
   pickup: {
@@ -30,8 +31,10 @@ export interface Ride {
   updatedAt: string;
 }
 
-export const fetchAllRides = async () => {
-  const response = await axiosInstance.get("/admin/manage/rides/get-all");
+export const fetchAllRides = async (query: GetAllQuery = {}) => {
+  const response = await axiosInstance.get("/admin/manage/rides/get-all", {
+    params: cleanGetAllQuery(query),
+  });
   return response.data;
 };
 
