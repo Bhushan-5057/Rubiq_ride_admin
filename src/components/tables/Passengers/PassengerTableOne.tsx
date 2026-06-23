@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Pencil } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllPassengersThunk } from "../../../store/redux/passenger-slice";
+import {
+  RiskBadge,
+  StatusUpdateModal,
+  getUserId,
+} from "../shared/UserRiskStatus";
+import { fetchAllPassengersThunk, updatePassengerStatusThunk } from "../../../store/redux/passenger-slice";
+import { Passenger, PassengerAccountStatus } from "../../../store/api/passenger-api";
 import { AppDispatch, RootState } from "../../../store/redux/store";
 import { Modal } from "../../ui/modal";
 import {
@@ -19,6 +25,8 @@ import {
   StatusFilterControl,
   useGetAllTableQuery,
 } from "../shared/GetAllTableControls";
+import { getApiErrorMessage } from "../../../lib/apiError";
+import { useToast } from "../../ui/toast/ToastContext";
 
 const statusBadgeClasses = (status?: string) => {
   switch (status) {
@@ -33,19 +41,17 @@ const statusBadgeClasses = (status?: string) => {
   }
 };
 
-const formatBooleanLabel = (value?: boolean) =>
-  typeof value === "boolean" ? (value ? "Yes" : "No") : "N/A";
-
 export default function PassengerTableOne() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { data: passengers, loading, error, pagination } = useSelector(
     (state: RootState) => state.passenger,
   );
 
   const [isOpen, setIsOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"edit" | "delete" | null>(null);
-  const [selectedPassenger, setSelectedPassenger] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<"edit" | null>(null);
+  const [selectedPassenger, setSelectedPassenger] = useState<Passenger | null>(null);
   const { query, search, setSearch, setQuery, setSort, setStatusFilter, sortMark } =
     useGetAllTableQuery();
 
@@ -53,10 +59,29 @@ export default function PassengerTableOne() {
     dispatch(fetchAllPassengersThunk(query));
   }, [dispatch, query]);
 
-  const handleEdit = (passenger: any) => {
+  const handleEdit = (passenger: Passenger) => {
     setSelectedPassenger(passenger);
     setModalMode("edit");
     setIsOpen(true);
+  };
+
+  const handleStatusSubmit = async (payload: { status: PassengerAccountStatus; blockedReason?: string; adminComment?: string; forceBlock?: boolean }) => {
+    if (!selectedPassenger) throw new Error("Unable to update passenger without a valid id.");
+    const id = getUserId(selectedPassenger);
+    if (!id) throw new Error("Unable to update passenger without a valid id.");
+
+    await dispatch(
+      updatePassengerStatusThunk({
+        id,
+        status: payload.status,
+        blockedReason: payload.blockedReason,
+        adminComment: payload.adminComment,
+        forceBlock: payload.forceBlock,
+      }),
+    ).unwrap();
+    showToast("Passenger status updated successfully.", "success");
+    setIsOpen(false);
+    dispatch(fetchAllPassengersThunk(query));
   };
 
   const truncateText = (text: string | undefined, maxLength = 20) => {
@@ -64,15 +89,19 @@ export default function PassengerTableOne() {
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   };
 
-  const safePassengers = Array.isArray(passengers) ? passengers : [];
+  const safePassengers = Array.isArray(passengers) ? (passengers as Passenger[]) : [];
   const currentPage = pagination.page || query.page || 1;
   const limit = pagination.limit || query.limit || 5;
 
   if (loading) return <p>Loading passengers...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="compact-table overflow-hidden rounded-lg poppins-semibold-italic border border-gray-200 bg-white  ">
+      {error && !isOpen && (
+        <div className="m-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
       {/* Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 border-b border-gray-100 ">
         <h2 className="text-sm font-semibold text-gray-800 ">
@@ -144,6 +173,12 @@ export default function PassengerTableOne() {
                 </TableCell>
                 <TableCell
                   isHeader
+                  className="px-5 py-3 text-start text-sm font-medium text-black "
+                >
+                  Risk
+                </TableCell>
+                <TableCell
+                  isHeader
                   className="px-5 py-3 text-start text-sm font-medium text-black  whitespace-nowrap"
                 >
                   <button onClick={() => setSort("createdAt")}>
@@ -174,7 +209,7 @@ export default function PassengerTableOne() {
                   </TableCell>
                 </TableRow>
               ) : (
-                safePassengers.map((passenger: any, index: number) => {
+                safePassengers.map((passenger: Passenger, index: number) => {
                   const passengerNumber =
                     (currentPage - 1) * limit + index + 1;
                   const passengerId = `P${String(passengerNumber).padStart(3, "0")}`;
@@ -214,14 +249,21 @@ export default function PassengerTableOne() {
                           {passenger.status || "N/A"}
                         </span>
                       </TableCell>
+                      <TableCell className="px-5 py-4">
+                        <RiskBadge risk={passenger.riskAssessment} />
+                      </TableCell>
                       {/* Created At */}
                       <TableCell className="px-2 py-2 text-sm text-gray-500 ">
-                        {formatDate(passenger.createdAt)}
+                        {formatDate(
+                          passenger.createdAt ? String(passenger.createdAt) : undefined,
+                        )}
                       </TableCell>
 
                       {/* Updated At */}
                       <TableCell className="px-2 py-2 text-sm text-gray-500 ">
-                        {formatDate(passenger.updatedAt)}
+                        {formatDate(
+                          passenger.updatedAt ? String(passenger.updatedAt) : undefined,
+                        )}
                       </TableCell>
 
                       {/* Actions */}
@@ -259,27 +301,16 @@ export default function PassengerTableOne() {
       />
 
       {/* Modal */}
-      {isOpen && (
-        <Modal title="Passenger" onClose={() => setIsOpen(false)}>
+      {isOpen && selectedPassenger && (
+        <Modal title="Update Passenger Status" onClose={() => setIsOpen(false)}>
           <div className="relative w-full max-h-[80vh] overflow-y-auto overflow-x-auto rounded-xl bg-white p-6 ">
-            {modalMode === "edit" && selectedPassenger && (
-              <div>Edit form goes here</div>
-            )}
-            {modalMode === "delete" && selectedPassenger && (
-              <div className="flex flex-col gap-4">
-                <p>
-                  Are you sure you want to delete{" "}
-                  {selectedPassenger.name || selectedPassenger.contactNumber}?
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 bg-gray-300 rounded"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+            {modalMode === "edit" && (
+              <StatusUpdateModal
+                user={selectedPassenger}
+                userType="passenger"
+                onClose={() => setIsOpen(false)}
+                onSubmit={handleStatusSubmit}
+              />
             )}
           </div>
         </Modal>

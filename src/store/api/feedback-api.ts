@@ -2,6 +2,7 @@ import axiosInstance from "./axiosInstance";
 import { GetAllPagination } from "./getAllAdapter";
 
 export interface FeedbackUser {
+  _id?: string;
   name?: string;
   profileImage?: string;
 }

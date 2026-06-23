@@ -41,6 +41,14 @@ interface DriverRideStats {
   cancelled?: number;
   missed?: number;
 }
+export interface RiskAssessment {
+  level?: "normal" | "warning" | "high";
+  complaintsCount?: number;
+  cancellationRate?: number;
+  missedRides?: number;
+  eligibleForBlockReview?: boolean;
+  blockReviewReasons?: unknown[];
+}
 
 export type DriverAccountStatus = "pending" | "active" | "inactive" | "blocked";
 export type DriverApprovalStatus =
@@ -80,6 +88,16 @@ export interface Driver {
   rating?: RatingSummary;
   earnings?: DriverEarnings;
   rideStats?: DriverRideStats;
+  complaints?: {
+    total?: number;
+    open?: number;
+    resolved?: number;
+  };
+  riskAssessment?: RiskAssessment;
+  blockedReason?: string;
+  adminComment?: string;
+  blockedAt?: string | number | Date;
+  blockedBy?: unknown;
   status: DriverAccountStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -116,16 +134,32 @@ export interface UpdateDriverPayload {
   email?: string;
   contactNumber?: string;
   status?: DriverAccountStatus;
+  adminComment?: string;
 }
 
 // Update driver account status
 export const updateDriverStatus = async (
   id: string,
-  status: DriverAccountStatus
+  status: DriverAccountStatus,
+  blockedReason?: string,
+  adminComment?: string,
+  forceBlock?: boolean
 ) => {
-  const response = await axiosInstance.put(`/admin/manage/drivers/update-status/${id}`, {
-    status,
-  });
+  const payload: Record<string, unknown> = { status };
+
+  if (status === "blocked") {
+    if (blockedReason) payload.blockedReason = blockedReason;
+    if (adminComment) payload.adminComment = adminComment;
+    if (forceBlock) payload.forceBlock = forceBlock;
+  } else if (status === "inactive") {
+    if (adminComment) payload.adminComment = adminComment;
+  }
+
+  const response = await axiosInstance.put(
+    `/admin/manage/drivers/update-status/${id}`,
+    payload
+  );
+
   return response.data;
 };
 

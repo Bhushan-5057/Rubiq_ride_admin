@@ -60,16 +60,12 @@ export const fetchDriverByIdThunk = createAsyncThunk(
 export const updateDriverStatusThunk = createAsyncThunk(
   "driver/updateStatus",
   async (
-    { id, status }: { id: string; status: DriverAccountStatus },
+    { id, status, blockedReason, adminComment, forceBlock }: { id: string; status: DriverAccountStatus; blockedReason?: string; adminComment?: string; forceBlock?: boolean },
     { rejectWithValue }
   ) => {
     try {
-      const res = await updateDriverStatus(id, status);
-      return {
-        id,
-        status: (res.driver?.status || res.status || status).toLowerCase(),
-        message: res.message,
-      };
+      const res = await updateDriverStatus(id, status, blockedReason, adminComment, forceBlock);
+      return res.driver || res.data || res;
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Update Driver Status"));
     }
@@ -125,18 +121,28 @@ const driverSlice = createSlice({
 
       // update status
       .addCase(updateDriverStatusThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        const { id, status, message } = action.payload;
-        const driver = state.data.find((d) => d._id === id || d.id === id);
-        if (driver) {
-          driver.status = status;
+        state.error = null;
+        const updatedDriver = action.payload;
+        const id = updatedDriver?._id || updatedDriver?.id;
+        if (!id) return;
+
+        const driverIndex = state.data.findIndex((d) => d._id === id || d.id === id);
+        if (driverIndex !== -1) {
+          state.data[driverIndex] = {
+            ...state.data[driverIndex],
+            ...updatedDriver,
+            id,
+          };
         }
 
-        // Sync selected driver if open
         if (state.selectedDriver && (state.selectedDriver._id === id || state.selectedDriver.id === id)) {
-          state.selectedDriver.status = status;
+          state.selectedDriver = {
+            ...state.selectedDriver,
+            ...updatedDriver,
+            id,
+          };
         }
-        state.message = message || "Driver status updated successfully";
+        state.message = updatedDriver?.message || "Driver status updated successfully";
       })
       .addCase(updateDriverStatusThunk.rejected, (state, action) => {
         state.loading = false;

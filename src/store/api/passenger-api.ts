@@ -3,6 +3,15 @@ import { cleanGetAllQuery, GetAllQuery } from "./getAllAdapter";
 
 export type PassengerAccountStatus = "active" | "inactive" | "blocked" | "pending";
 
+export interface RiskAssessment {
+  level?: "normal" | "warning" | "high";
+  complaintsCount?: number;
+  cancellationRate?: number;
+  missedRides?: number;
+  eligibleForBlockReview?: boolean;
+  blockReviewReasons?: unknown[];
+}
+
 export interface Passenger {
   createdAt: string | number | Date;
   city?: string;
@@ -28,7 +37,18 @@ export interface Passenger {
   rideStats?: {
     completed?: number;
     cancelled?: number;
+    missed?: number;
   };
+  complaints?: {
+    total?: number;
+    open?: number;
+    resolved?: number;
+  };
+  riskAssessment?: RiskAssessment;
+  blockedReason?: string;
+  adminComment?: string;
+  blockedAt?: string | number | Date;
+  blockedBy?: unknown;
   status: PassengerAccountStatus;
   id?: string;
 }
@@ -54,17 +74,30 @@ export interface UpdatePassengerPayload {
   contactNumber?: string;
   email?: string;
   status?: PassengerAccountStatus;
+  adminComment?: string;
 }
 
 export const updatePassengerStatus = async (
   id: string,
-  status: PassengerAccountStatus
+  status: PassengerAccountStatus,
+  blockedReason?: string,
+  adminComment?: string,
+  forceBlock?: boolean
 ) => {
+  const payload: Record<string, unknown> = { status };
+
+  if (status === "blocked") {
+    if (blockedReason) payload.blockedReason = blockedReason;
+    if (adminComment) payload.adminComment = adminComment;
+    if (forceBlock) payload.forceBlock = forceBlock;
+  } else if (status === "inactive") {
+    if (adminComment) payload.adminComment = adminComment;
+  }
+
   const response = await axiosInstance.put(
     `/admin/manage/passengers/update-status/${id}`,
-    {
-      status,
-    }
+    payload
   );
+
   return response.data;
 };

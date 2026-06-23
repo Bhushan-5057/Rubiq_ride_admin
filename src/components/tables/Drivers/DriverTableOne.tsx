@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Eye, Pencil } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllDriversThunk } from "../../../store/redux/driver-slice";
+import { Driver, DriverAccountStatus } from "../../../store/api/driver-api";
+import {
+  RiskBadge,
+  StatusUpdateModal,
+  getUserId,
+} from "../shared/UserRiskStatus";
+import { fetchAllDriversThunk, updateDriverStatusThunk } from "../../../store/redux/driver-slice";
 import { Modal } from "../../ui/modal";
 import { AppDispatch, RootState } from "../../../store/redux/store";
 import {
@@ -19,6 +25,7 @@ import {
   StatusFilterControl,
   useGetAllTableQuery,
 } from "../shared/GetAllTableControls";
+import { useToast } from "../../ui/toast/ToastContext";
 
 const statusBadgeClasses = (status?: string) => {
   switch (status) {
@@ -38,13 +45,14 @@ const formatBooleanLabel = (value?: boolean) =>
 
 export default function DriverTableOne() {
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
   const { data: drivers, loading, error, pagination } = useSelector(
     (state: RootState) => state.driver,
   );
 
   const [isOpen, setIsOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"edit" | "delete" | null>(null);
-  const [selectedDriver, setSelectedDriver] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<"edit" | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const { query, search, setSearch, setQuery, setSort, setStatusFilter, sortMark } =
     useGetAllTableQuery();
 
@@ -54,10 +62,29 @@ export default function DriverTableOne() {
     dispatch(fetchAllDriversThunk(query));
   }, [dispatch, query]);
 
-  const handleEdit = (driver: any) => {
+  const handleEdit = (driver: Driver) => {
     setSelectedDriver(driver);
     setModalMode("edit");
     setIsOpen(true);
+  };
+
+  const handleStatusSubmit = async (payload: { status: DriverAccountStatus; blockedReason?: string; adminComment?: string; forceBlock?: boolean }) => {
+    if (!selectedDriver) throw new Error("Unable to update driver without a valid id.");
+    const id = getUserId(selectedDriver);
+    if (!id) throw new Error("Unable to update driver without a valid id.");
+
+    await dispatch(
+      updateDriverStatusThunk({
+        id,
+        status: payload.status,
+        blockedReason: payload.blockedReason,
+        adminComment: payload.adminComment,
+        forceBlock: payload.forceBlock,
+      }),
+    ).unwrap();
+    showToast("Driver status updated successfully.", "success");
+    setIsOpen(false);
+    dispatch(fetchAllDriversThunk(query));
   };
 
   const truncateText = (text: string | undefined, maxLength = 20) => {
@@ -65,15 +92,19 @@ export default function DriverTableOne() {
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   };
 
-  const safeDrivers = Array.isArray(drivers) ? drivers : [];
+  const safeDrivers = Array.isArray(drivers) ? (drivers as Driver[]) : [];
   const currentPage = pagination.page || query.page || 1;
   const limit = pagination.limit || query.limit || 5;
 
   if (loading) return <p>Loading drivers...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="compact-table overflow-hidden rounded-lg border border-gray-200 bg-white  ">
+      {error && !isOpen && (
+        <div className="m-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <div className="border-b border-gray-100 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="mr-3 whitespace-nowrap text-base font-semibold text-gray-900">
@@ -181,6 +212,12 @@ export default function DriverTableOne() {
                   isHeader
                   className="px-5 py-3 text-start text-[12px] font-semibold uppercase tracking-wide text-gray-600 "
                 >
+                  Risk
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-start text-[12px] font-semibold uppercase tracking-wide text-gray-600 "
+                >
                   Availability
                 </TableCell>
                 <TableCell
@@ -222,7 +259,7 @@ export default function DriverTableOne() {
                   </TableCell>
                 </TableRow>
               ) : (
-                safeDrivers.map((driver: any, index: number) => {
+                safeDrivers.map((driver: Driver, index: number) => {
                   const driverNumber = (currentPage - 1) * limit + index + 1;
                   const driverId = `DR${String(driverNumber).padStart(3, "0")}`;
                   const name = driver.name || driver.contactNumber || "-";
@@ -255,6 +292,9 @@ export default function DriverTableOne() {
                         >
                           {driver.status || "N/A"}
                         </span>
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        <RiskBadge risk={driver.riskAssessment} />
                       </TableCell>
                       <TableCell className="px-5 py-4 text-gray-500 text-[12px] capitalize">
                         {driver.driverStatus || "N/A"}
@@ -301,11 +341,16 @@ export default function DriverTableOne() {
         query={query}
         setQuery={setQuery}
       />
-      {isOpen && (
-        <Modal title="Driver Details" onClose={() => setIsOpen(false)}>
+      {isOpen && selectedDriver && (
+        <Modal title="Update Driver Status" onClose={() => setIsOpen(false)}>
           <div className="relative w-full max-h-[80vh] overflow-y-auto overflow-x-auto rounded-xl bg-white p-6 ">
             {modalMode === "edit" && selectedDriver && (
-              <div>Edit form goes here</div>
+              <StatusUpdateModal
+                user={selectedDriver}
+                userType="driver"
+                onClose={() => setIsOpen(false)}
+                onSubmit={handleStatusSubmit}
+              />
             )}
           </div>
         </Modal>

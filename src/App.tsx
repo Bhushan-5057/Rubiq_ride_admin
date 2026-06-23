@@ -21,6 +21,13 @@ import AdminTable from "./pages/Tables/admin/AdminTable";
 import PassengerDetails from "./components/tables/Passengers/Details/PassengerDetails";
 import RideDetailsPage from "./components/tables/Rides/Details/RideDetails";
 import FeedbackTable from "./pages/Tables/FeedbackTables";
+import ComplaintTable from "./pages/Tables/ComplaintTables";
+import ComplaintDetails from "./components/tables/Complaints/Details/ComplaintDetails";
+import RideReports from "./pages/Reports/RideReports";
+import UserReports from "./pages/Reports/UserReports";
+import SummaryReports from "./pages/Reports/SummaryReports";
+import RevenueReports from "./pages/Reports/RevenueReports";
+import PricingTable from "./pages/Tables/admin/PricingTable"
 
 import GlobalFeedbackListener from "./components/common/GlobalFeedbackListener";
 
@@ -162,6 +169,73 @@ export default function App() {
           />
 
           <Route
+            path="/complaints"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ComplaintTable />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/complaints/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ComplaintDetails />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={<Navigate to="/reports/users" replace />}
+          />
+          <Route
+            path="/reports/users"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <UserReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/rides"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <RideReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/summary"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <SummaryReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/revenue"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <RevenueReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -178,6 +252,17 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <AdminTable />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/pricing"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <PricingTable />
                 </AppLayout>
               </ProtectedRoute>
             }

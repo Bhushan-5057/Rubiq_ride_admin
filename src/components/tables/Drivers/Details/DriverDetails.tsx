@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, MapPin, User } from "lucide-react";
 import { AppDispatch, RootState } from "../../../../store/redux/store";
 import { fetchDriverByIdThunk } from "../../../../store/redux/driver-slice";
 import { formatDate } from "../../../../lib/utils";
+import { RiskDetailPanel } from "../../shared/UserRiskStatus";
 import {
   formatBoolean,
   InfoGrid,
@@ -182,9 +183,15 @@ export default function DriverDetails() {
           <InfoItem label="Account Status">
             <StatusPill value={driver.status} />
           </InfoItem>
+          {driver.status && (driver.status === "blocked" || driver.status === "pending") && (
+            <InfoItem label="Account Restriction" value="Can sign in, but cannot use driver-related functionality until account becomes Active." />
+          )}
           <InfoItem label="Approval Status">
             <StatusPill value={driver.approvalStatus} />
           </InfoItem>
+          <InfoItem label="Documents Verified" value={formatBoolean(driver.documentsVerified)} />
+          <InfoItem label="Blocked Reason" value={driver.blockedReason || "Not provided"} />
+          <InfoItem label="Admin Comment" value={driver.adminComment || "Not provided"} />
           <InfoItem label="Online">
             <StatusPill value={driver.isOnline} />
           </InfoItem>
@@ -204,6 +211,10 @@ export default function DriverDetails() {
           <InfoItem label="Location" value={driverAddress(driver)} />
           <InfoItem label="Verification Remarks" value={driver.verificationRemarks || driver.remarks || "None"} />
         </InfoGrid>
+      </Section>
+
+      <Section title="Risk & Review">
+        <RiskDetailPanel user={driver} />
       </Section>
 
       <Section title="Vehicle & Earnings">

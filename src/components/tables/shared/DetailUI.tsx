@@ -21,16 +21,16 @@ export function statusTone(value?: string | boolean): Tone {
   if (value === false) return "error";
 
   const normalized = String(value || "").toLowerCase();
-  if (["active", "approved", "available", "completed", "ready", "online", "true"].includes(normalized)) {
+  if (["active", "approved", "available", "completed", "ready", "online", "resolved", "true"].includes(normalized)) {
     return "success";
   }
-  if (["rejected", "blocked", "cancelled", "canceled", "missed", "false"].includes(normalized)) {
+  if (["rejected", "blocked", "cancelled", "canceled", "missed", "closed", "false"].includes(normalized)) {
     return "error";
   }
   if (["pending", "incompleted", "inactive", "unavailable", "started", "ongoing"].includes(normalized)) {
     return "warning";
   }
-  if (["accepted", "on_trip"].includes(normalized)) return "info";
+  if (["accepted", "on_trip", "in_progress"].includes(normalized)) return "info";
   return "neutral";
 }
 

@@ -155,6 +155,31 @@ interface PaginationControlsProps {
   setQuery: Dispatch<SetStateAction<GetAllQuery>>;
 }
 
+function getPageList(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages: Array<number | "ellipsis"> = [1];
+  const left = Math.max(2, currentPage - 1);
+  const right = Math.min(totalPages - 1, currentPage + 1);
+
+  if (left > 2) {
+    pages.push("ellipsis");
+  }
+
+  for (let page = left; page <= right; page += 1) {
+    pages.push(page);
+  }
+
+  if (right < totalPages - 1) {
+    pages.push("ellipsis");
+  }
+
+  pages.push(totalPages);
+  return pages;
+}
+
 export function PaginationControls({
   pagination,
   query,
@@ -168,32 +193,54 @@ export function PaginationControls({
     [currentPage, limit, pagination.total],
   );
   const pageEnd = Math.min(currentPage * limit, pagination.total);
+  const pageList = useMemo(
+    () => getPageList(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
+
+  const goToPage = (page: number) => {
+    setQuery((current) => ({ ...current, page }));
+  };
 
   return (
-    <div className="flex flex-col gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-600   sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
       <span>
         Showing {pageStart}-{pageEnd} of {pagination.total}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           disabled={currentPage <= 1}
-          onClick={() =>
-            setQuery((current) => ({
-              ...current,
-              page: Math.max(1, currentPage - 1),
-            }))
-          }
-          className="rounded border px-3 py-1 disabled:opacity-50 bg-red-500 text-white disabled:bg-gray-300 disabled:text-gray-500 "
+          onClick={() => goToPage(Math.max(1, currentPage - 1))}
+          className="rounded border px-3 py-1 disabled:opacity-50 bg-red-500 text-white disabled:bg-gray-300 disabled:text-gray-500"
         >
           Prev
         </button>
-        <span>{currentPage} of {totalPages}</span>
+
+        {pageList.map((page, index) =>
+          page === "ellipsis" ? (
+            <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500">
+              …
+            </span>
+          ) : (
+            <button
+              key={page}
+              type="button"
+              onClick={() => goToPage(page)}
+              className={`rounded border px-3 py-1 text-sm ${
+                page === currentPage
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {page}
+            </button>
+          ),
+        )}
+
         <button
           disabled={currentPage >= totalPages}
-          onClick={() =>
-            setQuery((current) => ({ ...current, page: currentPage + 1 }))
-          }
-          className="rounded border px-3 py-1 disabled:opacity-50 bg-green-500 text-white disabled:bg-gray-300 disabled:text-gray-500 "
+          onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+          className="rounded border px-3 py-1 disabled:opacity-50 bg-green-500 text-white disabled:bg-gray-300 disabled:text-gray-500"
         >
           Next
         </button>

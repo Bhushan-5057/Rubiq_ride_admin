@@ -6,6 +6,7 @@ import driverReducer from "./driver-slice";
 import passengerReducer from "./passenger-slice";
 import rideReducer from "./rideSlice";
 import documentsReducer from "./document-slice";
+import pricingReducer from "./pricing-slice";
 
 import feedbackReducer from "./feedback-slice";
 
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   passenger: passengerReducer,
   ride: rideReducer,
   documents: documentsReducer,
+  pricing: pricingReducer,
   feedback: feedbackReducer,
 });
 

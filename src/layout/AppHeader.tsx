@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { TableIcon, GridIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { TableIcon, GridIcon, PanelRightClose, PanelRightOpen, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "../context/SidebarContext";
 import UserDropdown from "../components/header/UserDropdown";
@@ -14,7 +14,13 @@ const navItems = [
     name: "Tables",
     icon: <TableIcon />,
     subItems: [
-     
+      { name: "Admin", path: "/admin" },
+      { name: "Driver", path: "/driver" },
+      { name: "Documents", path: "/documents" },
+      { name: "Passengers", path: "/passengers" },
+      { name: "Rides", path: "/rides" },
+      { name: "Feedback", path: "/feedback" },
+      { name: "Complaints", path: "/complaints" },
     ],
   },
 ];
@@ -36,8 +42,6 @@ const AppHeader: React.FC = () => {
   >([]);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // const logoSrc = theme === "dark" ? IMGAGES.LOGO_DARK : IMGAGES.LOGO_LIGHT;
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -78,9 +82,7 @@ const AppHeader: React.FC = () => {
   };
 
   const handleResultClick = (path: string, label?: string) => {
-    if (label) {
-      setQuery(label);
-    }
+    setQuery("");
     setSearchResults([]);
     navigate(path);
   };
@@ -103,10 +105,10 @@ const AppHeader: React.FC = () => {
 
           <a href="/" className="lg:hidden">
             <div className="flex items-center justify-center gap-2">
-            <span className="text-center block text-2xl font-semibold tracking-widest text-gray-900  uppercase select-none">
-  <span className="text-gray-700 ">RUBIQ</span>
-  <span className="ml-2 text-indigo-500 ">RIDE</span>
-</span>
+              <span className="text-center block text-2xl font-semibold tracking-widest text-gray-900  uppercase select-none">
+                <span className="text-gray-700 ">RUBIQ</span>
+                <span className="ml-2 text-indigo-500 ">RIDE</span>
+              </span>
             </div>
           </a>
 
@@ -158,6 +160,20 @@ const AppHeader: React.FC = () => {
                   placeholder="Search or type command..."
                   className=" h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10       xl:w-[430px]"
                 />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setSearchResults([]);
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label="Clear search"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
                 {searchResults.length > 0 && (
                   <ul className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-y-hidden rounded-md bg-white  shadow-md border border-gray-200 ">
                     {searchResults.map((result) => (
@@ -173,18 +189,14 @@ const AppHeader: React.FC = () => {
                     ))}
                   </ul>
                 )}
-                <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs text-gray-500   ">
-                  ⌘ K
-                </button>
               </div>
             </form>
           </div>
         </div>
 
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-2 px-8 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"
+            } items-center justify-between w-full gap-2 px-8 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
           </div>

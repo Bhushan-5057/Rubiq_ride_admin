@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ArrowLeft, MapPin, User } from "lucide-react";
+import { ArrowLeft,MapPin, User } from "lucide-react";
 import { AppDispatch, RootState } from "../../../../store/redux/store";
 import { fetchPassengerByIdThunk } from "../../../../store/redux/passenger-slice";
 import { formatDate } from "../../../../lib/utils";
@@ -14,6 +14,7 @@ import {
   StatCard,
   StatusPill,
 } from "../../shared/DetailUI";
+import { RiskDetailPanel } from "../../shared/UserRiskStatus";
 
 const formatPassengerDate = (value?: string | number | Date) =>
   value ? formatDate(String(value)) : "N/A";
@@ -140,6 +141,11 @@ export default function PassengerDetails() {
           <InfoItem label="Status">
             <StatusPill value={passenger.status} />
           </InfoItem>
+          {passenger.status && (passenger.status === "blocked" || passenger.status === "pending") && (
+            <InfoItem label="Account Restriction" value="Can sign in, but cannot use passenger ride features until account becomes Active." />
+          )}
+          <InfoItem label="Blocked Reason" value={passenger.blockedReason || "Not provided"} />
+          <InfoItem label="Admin Comment" value={passenger.adminComment || "Not provided"} />
           <InfoItem label="OTP Verified" value={formatBoolean(passenger.otpVerified)} />
           <InfoItem label="Profile Completed" value={formatBoolean(passenger.profileCompleted)} />
           <InfoItem label="Created At" value={formatPassengerDate(passenger.createdAt)} />
@@ -147,6 +153,10 @@ export default function PassengerDetails() {
           <InfoItem label="Last Logout" value={formatPassengerDate(passenger.lastLogoutAt)} />
           <InfoItem label="Location" value={passengerAddress(passenger)} />
         </InfoGrid>
+      </Section>
+
+      <Section title="Risk & Review">
+        <RiskDetailPanel user={passenger} />
       </Section>
     </div>
   );

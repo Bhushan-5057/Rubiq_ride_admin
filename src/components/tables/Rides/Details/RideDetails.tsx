@@ -1,5 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, Bike, Mail, MapPin, Phone, Route, User } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Bike,
+  Mail,
+  MapPin,
+  MessageSquareText,
+  Phone,
+  Route,
+  User,
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { formatDate } from "../../../../lib/utils";
 import {
@@ -16,6 +26,19 @@ import {
   roleLabel,
   UserSummary,
 } from "../../Feedback/FeedbackShared";
+import {
+  Complaint,
+  getAllComplaints,
+} from "../../../../store/api/complaint-api";
+import {
+  formatComplaintDateTime,
+  getAgainstRole,
+  getComplaintDisplayId,
+  getRaisedByRole,
+  labelize,
+  PartySummary,
+  statusToneLabel,
+} from "../../Complaints/ComplaintShared";
 
 function DetailLine({
   label,
@@ -44,14 +67,46 @@ const getRideFeedbackErrorMessage = (error: unknown) => {
   return message;
 };
 
+type RideDetailsState = {
+  _id?: string;
+  rideId?: string;
+  status?: string;
+  distance?: number;
+  fareEstimate?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  passenger?: {
+    name?: string;
+    contactNumber?: string;
+    email?: string;
+  };
+  driver?: {
+    name?: string;
+    vehicleNumber?: string;
+    vehicleType?: string;
+    contactNumber?: string;
+  };
+  pickup?: {
+    address?: string;
+    coordinates?: [number, number];
+  };
+  drop?: {
+    address?: string;
+    coordinates?: [number, number];
+  };
+};
+
 export default function RideDetailsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const ride: any = location.state;
+  const ride = location.state as RideDetailsState | null;
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [complaintLoading, setComplaintLoading] = useState(false);
+  const [complaintError, setComplaintError] = useState<string | null>(null);
 
   useEffect(() => {
     const rideId = ride?.rideId || ride?._id;
@@ -84,7 +139,40 @@ export default function RideDetailsPage() {
     return () => {
       isMounted = false;
     };
-  }, [ride]);
+  }, [ride, showToast]);
+
+  useEffect(() => {
+    const rideId = ride?.rideId || ride?._id;
+    if (!rideId) return;
+
+    let isMounted = true;
+
+    const fetchRideComplaints = async () => {
+      setComplaintLoading(true);
+      setComplaintError(null);
+      try {
+        const result = await getAllComplaints({
+          rideId,
+          page: 1,
+          limit: 20,
+        });
+        if (isMounted) setComplaints(result.complaints);
+      } catch (error) {
+        if (!isMounted) return;
+        const message = getApiErrorMessage(error, "Fetch Ride Complaints");
+        setComplaintError(message);
+        showToast(message, "error");
+      } finally {
+        if (isMounted) setComplaintLoading(false);
+      }
+    };
+
+    fetchRideComplaints();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [ride, showToast]);
 
   if (!ride) {
     return (
@@ -181,6 +269,45 @@ export default function RideDetailsPage() {
           </div>
         </Section>
       </div>
+            <Section title="Route">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-gray-200 p-3 ">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+              <MapPin size={18} className="text-green-500" />
+              Pickup
+            </div>
+            <p className="text-sm leading-6 text-gray-700 ">
+              {ride.pickup?.address || "N/A"}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-3 ">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
+              <MapPin size={18} className="text-red-500" />
+              Drop
+            </div>
+            <p className="text-sm leading-6 text-gray-700 ">
+              {ride.drop?.address || "N/A"}
+            </p>
+          </div>
+        </div>
+
+        {pickupLat && pickupLng && dropLat && dropLng && (
+          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 ">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900  ">
+              <Route size={17} /> Ride Route Map
+            </div>
+            <iframe
+              title="ride-route-map"
+              width="100%"
+              height="420"
+              className="h-[320px] w-full sm:h-[420px]"
+              loading="lazy"
+              src={`https://maps.google.com/maps?saddr=${pickupLat},${pickupLng}&daddr=${dropLat},${dropLng}&output=embed`}
+            />
+          </div>
+        )}
+      </Section>
 
       <Section title="Feedback">
         {feedbackLoading ? (
@@ -199,7 +326,7 @@ export default function RideDetailsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <StarRating value={feedback.rating || 0} />
-                    <p className="mt-2 break-words text-sm leading-6 text-gray-700 ">
+                    <p className="mt-2 wrap-break-word text-sm leading-6 text-gray-700 ">
                       {feedback.comment || "No comment provided."}
                     </p>
                   </div>
@@ -241,45 +368,124 @@ export default function RideDetailsPage() {
         )}
       </Section>
 
-      <Section title="Route">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-gray-200 p-3 ">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
-              <MapPin size={18} className="text-green-500" />
-              Pickup
-            </div>
-            <p className="text-sm leading-6 text-gray-700 ">
-              {ride.pickup?.address || "N/A"}
-            </p>
-          </div>
+      <Section title="Complaints">
+        {complaintLoading ? (
+          <p className="text-sm text-gray-500">Loading complaints...</p>
+        ) : complaintError ? (
+          <p className="text-sm text-red-500">{complaintError}</p>
+        ) : complaints.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No complaints found for this ride
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            {complaints.map((complaint, index) => {
+              const raisedByRole = getRaisedByRole(complaint);
+              const againstRole = getAgainstRole(complaint);
+              const displayId = getComplaintDisplayId(
+                complaint,
+                `CMP${String(index + 1).padStart(3, "0")}`,
+              );
 
-          <div className="rounded-lg border border-gray-200 p-3 ">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 ">
-              <MapPin size={18} className="text-red-500" />
-              Drop
-            </div>
-            <p className="text-sm leading-6 text-gray-700 ">
-              {ride.drop?.address || "N/A"}
-            </p>
-          </div>
-        </div>
+              return (
+                <div
+                  key={complaint._id || complaint.complaintId || displayId}
+                  className="rounded-lg border border-gray-200 p-3"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-red-50 text-red-500">
+                          <AlertTriangle size={18} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="break-all text-sm font-semibold text-gray-900">
+                            {displayId}
+                          </p>
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                            {labelize(complaint.category)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-        {pickupLat && pickupLng && dropLat && dropLng && (
-          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 ">
-            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900  ">
-              <Route size={17} /> Ride Route Map
-            </div>
-            <iframe
-              title="ride-route-map"
-              width="100%"
-              height="420"
-              className="h-[320px] w-full sm:h-[420px]"
-              loading="lazy"
-              src={`https://maps.google.com/maps?saddr=${pickupLat},${pickupLng}&daddr=${dropLat},${dropLng}&output=embed`}
-            />
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <StatusPill
+                        value={complaint.status}
+                        label={statusToneLabel(complaint.status)}
+                      />
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {formatComplaintDateTime(complaint.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-md bg-gray-50 p-3">
+                    <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+                      <MessageSquareText size={14} />
+                      Description
+                    </div>
+                    <p className="break-words text-sm leading-6 text-gray-700">
+                      {complaint.description || "No description provided."}
+                    </p>
+                    {complaint.adminResponse && (
+                      <div className="mt-3 border-t border-gray-200 pt-3">
+                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                          Admin Response
+                        </p>
+                        <p className="break-words text-sm leading-6 text-gray-700">
+                          {complaint.adminResponse}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-md bg-gray-50 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                          Raised By
+                        </p>
+                        {raisedByRole && (
+                          <StatusPill
+                            value={raisedByRole}
+                            label={labelize(raisedByRole)}
+                          />
+                        )}
+                      </div>
+                      <PartySummary
+                        user={complaint.raisedBy}
+                        role={raisedByRole}
+                        fallback="Unknown user"
+                      />
+                    </div>
+
+                    <div className="rounded-md bg-gray-50 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                          Against
+                        </p>
+                        {againstRole && (
+                          <StatusPill
+                            value={againstRole}
+                            label={labelize(againstRole)}
+                          />
+                        )}
+                      </div>
+                      <PartySummary
+                        user={complaint.against}
+                        role={againstRole}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </Section>
+
+
     </div>
   );
 }

@@ -36,21 +36,15 @@ export function UserSummary({
 }) {
   return (
     <div className="flex min-w-[150px] items-center gap-2">
-      {user?.profileImage ? (
-        <img
-          src={user.profileImage}
-          alt={user.name || fallback}
-          className="h-9 w-9 rounded-full border object-cover"
-        />
-      ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-400">
-          <UserCircle size={20} />
-        </div>
-      )}
-      <span className="max-w-[140px] truncate text-sm font-medium text-gray-800 ">
+     <div className="flex max-w-[140px] flex-col">
+      <span className="text-xs text-gray-900">
+        {user?._id || fallback}
+      </span>
+      <span className="truncate text-sm font-medium text-gray-800">
         {user?.name || fallback}
       </span>
     </div>
+  </div>
   );
 }
 

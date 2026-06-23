@@ -60,16 +60,12 @@ export const fetchPassengerByIdThunk = createAsyncThunk(
 export const updatePassengerStatusThunk = createAsyncThunk(
   "passenger/updateStatus",
   async (
-    { id, status }: { id: string; status: PassengerAccountStatus },
+    { id, status, blockedReason, adminComment, forceBlock }: { id: string; status: PassengerAccountStatus; blockedReason?: string; adminComment?: string; forceBlock?: boolean },
     { rejectWithValue }
   ) => {
     try {
-      const response = await updatePassengerStatus(id, status);
-      return {
-        id,
-        status: (response.passenger?.status || response.status || status).toLowerCase(),
-        message: response.message || "Status updated",
-      };
+      const response = await updatePassengerStatus(id, status, blockedReason, adminComment, forceBlock);
+      return response.passenger || response.data || response;
     } catch (error: any) {
       return rejectWithValue(getApiErrorMessage(error, "Update Passenger Status"));
     }
@@ -104,12 +100,31 @@ const passengerSlice = createSlice({
 
       // update status
       .addCase(updatePassengerStatusThunk.fulfilled, (state, action) => {
-        const { id, status, message } = action.payload;
-        const passenger = state.data.find((p) => p._id === id || p.id === id);
-        if (passenger) passenger.status = status;
-        state.message = message || "Passenger status updated successfully";
+        state.error = null;
+        const updatedPassenger = action.payload;
+        const id = updatedPassenger?._id || updatedPassenger?.id;
+        if (!id) return;
+
+        const passengerIndex = state.data.findIndex((p) => p._id === id || p.id === id);
+        if (passengerIndex !== -1) {
+          state.data[passengerIndex] = {
+            ...state.data[passengerIndex],
+            ...updatedPassenger,
+            id,
+          };
+        }
+
+        if (state.selectedPassenger && (state.selectedPassenger._id === id || state.selectedPassenger.id === id)) {
+          state.selectedPassenger = {
+            ...state.selectedPassenger,
+            ...updatedPassenger,
+            id,
+          };
+        }
+        state.message = updatedPassenger?.message || "Passenger status updated successfully";
       })
       .addCase(updatePassengerStatusThunk.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       })
       .addCase(fetchPassengerByIdThunk.pending, (state) => {
