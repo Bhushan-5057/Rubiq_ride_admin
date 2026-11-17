@@ -1,6 +1,6 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import PageMeta from "../../../components/common/PageMeta";
-import PricingTableOne from "../../../components/tables/Pricing/PricingTableOne";
+import PricingTableOne from "../../../components/tables/pricing/PricingTableOne";
 
 export default function PricingTable() {
     return (

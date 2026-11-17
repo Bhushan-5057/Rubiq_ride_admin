@@ -152,7 +152,6 @@ export function PartySummary({
   fallback?: string;
 }) {
   const userObject = getUserObject(user);
-  const userId = getUserId(user);
   const displayName = userObject?.name || (role ? labelize(role) : "") || fallback;
 
   return (

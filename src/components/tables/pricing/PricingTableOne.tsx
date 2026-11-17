@@ -174,7 +174,9 @@ export default function PricingTableOne() {
 
                     <TableCell className="px-5 py-4">
                       <button
-                        onClick={() => handleEdit(pricing)}
+                        onClick={() => {
+                          if (pricing) handleEdit(pricing);
+                        }}
                         className="rounded-full p-2 hover:bg-gray-100"
                         title="Edit"
                       >

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useToast } from "../ui/toast/ToastContext";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
@@ -19,12 +18,11 @@ type SignInFormValues = z.infer<typeof SignInSchema>;
 export default function SignInForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const isLoggedIn = useAuthState();
   const [showPassword, setShowPassword] = useState(false);
 
-  const { loading, error, successMessage, validationErrors, isAuthenticated } =
+  const { loading, validationErrors, isAuthenticated } =
     useSelector((state: RootState) => state.auth);
 
   const from = (location.state as { from?: { pathname?: string } })?.from

@@ -83,10 +83,7 @@ const formatValidationError = (validationError: BackendValidationError) => {
 
 export const formatParsedApiError = (parsed: ParsedApiError): string => {
   if (parsed.validationErrors.length) {
-    return parsed.validationErrors
-      .map((err) => asString(err.msg) || asString(err.message) || String(err))
-      .filter(Boolean)
-      .join(", ");
+    return parsed.validationErrors.map(formatValidationError).join(", ");
   }
   return parsed.message;
 };

@@ -86,7 +86,7 @@ const AppHeader: React.FC = () => {
     setSearchResults(results);
   };
 
-  const handleResultClick = (path: string, label?: string) => {
+  const handleResultClick = (path: string) => {
     setQuery("");
     setSearchResults([]);
     navigate(path);
@@ -186,7 +186,7 @@ const AppHeader: React.FC = () => {
                         key={result.path}
                         className="px-4 py-2 cursor-pointer hover:bg-gray-100 "
                         onClick={() =>
-                          handleResultClick(result.path, result.label)
+                          handleResultClick(result.path)
                         }
                       >
                         {result.label}

@@ -1,4 +1,3 @@
-import { UserCircle } from "lucide-react";
 import { Feedback, FeedbackRide, FeedbackUser } from "../../../store/api/feedback-api";
 import { StarRating, StatusPill } from "../shared/DetailUI";
 

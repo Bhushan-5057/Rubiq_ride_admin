@@ -49,32 +49,32 @@ function StatCard({
   value: number;
   icon: ReactNode;
   delay?: number;
-  href?: string;
+  href: string;
 }) {
   return (
-      <Link to={href}>
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-theme-xs  ">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-          {icon}
-        </div>
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-            {label}
-          </p>
-          <p className="text-xl font-semibold text-gray-900">
-            <CountUp
-              start={0}
-              end={value}
-              duration={2}
-              delay={delay}
-              separator=","
-              preserveValue
-            />
-          </p>
+    <Link to={href}>
+      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-theme-xs">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            {icon}
+          </div>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+              {label}
+            </p>
+            <p className="text-xl font-semibold text-gray-900">
+              <CountUp
+                start={0}
+                end={value}
+                duration={2}
+                delay={delay}
+                separator=","
+                preserveValue
+              />
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </Link>
   );
 }

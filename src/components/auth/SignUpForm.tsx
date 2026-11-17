@@ -14,7 +14,6 @@ import {
   clearAuthMessages,
   registerThunk,
 } from "../../store/redux/auth-slice";
-import { useToast } from "../ui/toast/ToastContext";
 import { useAuthState } from "../../hooks/useAuthState";
 
 type SignUpFormValues = z.infer<typeof SignUpSchema>;
@@ -23,11 +22,10 @@ export default function SignUpForm() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const isLoggedIn = useAuthState();
 
-  const { loading: authLoading, error: authError, successMessage: authSuccessMessage, validationErrors, isAuthenticated } = useSelector(
+  const { loading: authLoading, validationErrors, isAuthenticated } = useSelector(
     (state: RootState) => state.auth
   );
 
